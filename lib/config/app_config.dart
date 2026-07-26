@@ -10,7 +10,7 @@ enum AppThemePreference { light, dark }
 
 class AppConfig {
   const AppConfig({
-    this.windowDecorations = false,
+    this.windowDecorations = true,
     this.theme = AppThemePreference.light,
     this.colorTheme = ThemeDefinition.defaultName,
     this.localization = LocalizationDefinition.defaultName,
@@ -109,7 +109,7 @@ class AppConfig {
       return AppConfig(
         windowDecorations: decoded['window_decorations'] is bool
             ? decoded['window_decorations'] as bool
-            : false,
+            : true,
         theme: decoded['theme'] == 'dark'
             ? AppThemePreference.dark
             : AppThemePreference.light,

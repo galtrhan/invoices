@@ -6,10 +6,8 @@ import 'package:invoices/features/clients/clients_page.dart';
 import 'package:invoices/features/company/company_page.dart';
 import 'package:invoices/features/invoices/invoices_page.dart';
 import 'package:invoices/features/settings/settings_page.dart';
-import 'package:invoices/app_info.dart';
 import 'package:invoices/l10n/localization_catalog.dart';
 import 'package:invoices/shell/side_nav.dart';
-import 'package:invoices/shell/window_title_bar.dart';
 import 'package:invoices/theme/theme_catalog.dart';
 
 class AppShell extends StatefulWidget {
@@ -42,26 +40,16 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
+      body: Row(
+        crossAxisAlignment: .stretch,
         children: [
-          WindowTitleBar(
-            title: AppInfo.name,
-            showWindowControls: !widget.config.windowDecorations,
+          SideNav(
+            section: _section,
+            onSectionSelected: (section) {
+              setState(() => _section = section);
+            },
           ),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: .stretch,
-              children: [
-                SideNav(
-                  section: _section,
-                  onSectionSelected: (section) {
-                    setState(() => _section = section);
-                  },
-                ),
-                Expanded(child: _pageFor(_section)),
-              ],
-            ),
-          ),
+          Expanded(child: _pageFor(_section)),
         ],
       ),
     );

@@ -39,7 +39,7 @@ Tracked under `config/` in the repo. Missing keys fall back to defaults.
 
 ```json
 {
-  "window_decorations": false,
+  "window_decorations": true,
   "theme": "light",
   "color_theme": "Default",
   "localization": "English"
@@ -48,7 +48,7 @@ Tracked under `config/` in the repo. Missing keys fall back to defaults.
 
 | Key | Values | Notes |
 |-----|--------|-------|
-| `window_decorations` | `true` / `false` | Native GTK title bar |
+| `window_decorations` | `true` / `false` | Native GTK title bar (default `true`; set `false` for borderless, e.g. Hyprland) |
 | `theme` | `"light"` / `"dark"` | Mode; also set in **Settings → Appearance** |
 | `color_theme` | theme `name` string | Must match a loaded theme’s `name`, or `"Default"` |
 | `localization` | localization `name` string | Must match a loaded pack’s `name`, or `"English"` |

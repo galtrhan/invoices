@@ -45,7 +45,7 @@ gboolean parse_bool_key(const gchar* json, const gchar* key,
 
 AppConfig app_config_load(void) {
   AppConfig config;
-  config.window_decorations = FALSE;
+  config.window_decorations = TRUE;
 
   g_autofree gchar* path = resolve_config_path();
   g_autofree gchar* contents = nullptr;
