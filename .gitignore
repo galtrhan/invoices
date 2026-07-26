@@ -48,6 +48,5 @@ app.*.map.json
 # FVM Version Cache
 .fvm/
 
-# Local notes and debug config
+# Local notes
 todo.md
-config.json

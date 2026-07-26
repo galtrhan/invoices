@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'package:invoices/theme/app_theme.dart';
+import 'package:invoices/theme/theme_definition.dart';
 
 class WindowTitleBar extends StatelessWidget {
   const WindowTitleBar({
@@ -15,6 +15,8 @@ class WindowTitleBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chrome = Theme.of(context).extension<AppChromeColors>()!;
+
     return GestureDetector(
       behavior: .opaque,
       onPanStart: showWindowControls
@@ -23,9 +25,9 @@ class WindowTitleBar extends StatelessWidget {
       child: Container(
         height: 40,
         padding: const .symmetric(horizontal: 12),
-        decoration: const BoxDecoration(
-          color: AppTheme.ink,
-          border: Border(bottom: BorderSide(color: Color(0xFF2A3545))),
+        decoration: BoxDecoration(
+          color: chrome.sidebar,
+          border: Border(bottom: BorderSide(color: chrome.sidebarBorder)),
         ),
         child: Row(
           children: [
@@ -39,7 +41,11 @@ class WindowTitleBar extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            if (showWindowControls) const _WindowControls(),
+            if (showWindowControls)
+              _WindowControls(
+                hoverColor: chrome.sidebarHover,
+                dangerColor: chrome.danger,
+              ),
           ],
         ),
       ),
@@ -48,7 +54,13 @@ class WindowTitleBar extends StatelessWidget {
 }
 
 class _WindowControls extends StatelessWidget {
-  const _WindowControls();
+  const _WindowControls({
+    required this.hoverColor,
+    required this.dangerColor,
+  });
+
+  final Color hoverColor;
+  final Color dangerColor;
 
   @override
   Widget build(BuildContext context) {
@@ -57,10 +69,12 @@ class _WindowControls extends StatelessWidget {
       children: [
         _ControlButton(
           icon: Icons.remove,
+          hoverColor: hoverColor,
           onPressed: windowManager.minimize,
         ),
         _ControlButton(
           icon: Icons.crop_square,
+          hoverColor: hoverColor,
           onPressed: () async {
             if (await windowManager.isMaximized()) {
               await windowManager.unmaximize();
@@ -71,7 +85,7 @@ class _WindowControls extends StatelessWidget {
         ),
         _ControlButton(
           icon: Icons.close,
-          hoverColor: AppTheme.danger,
+          hoverColor: dangerColor,
           onPressed: windowManager.close,
         ),
       ],
@@ -83,12 +97,12 @@ class _ControlButton extends StatefulWidget {
   const _ControlButton({
     required this.icon,
     required this.onPressed,
-    this.hoverColor,
+    required this.hoverColor,
   });
 
   final IconData icon;
   final Future<void> Function() onPressed;
-  final Color? hoverColor;
+  final Color hoverColor;
 
   @override
   State<_ControlButton> createState() => _ControlButtonState();
@@ -99,9 +113,7 @@ class _ControlButtonState extends State<_ControlButton> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = _hover
-        ? (widget.hoverColor ?? const Color(0xFF2A3545))
-        : Colors.transparent;
+    final bg = _hover ? widget.hoverColor : Colors.transparent;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),

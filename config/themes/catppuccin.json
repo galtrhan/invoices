@@ -1,0 +1,31 @@
+{
+  "name": "Catppuccin",
+  "light": {
+    "primary": "#179299",
+    "on_primary": "#FFFFFF",
+    "surface": "#EFF1F5",
+    "on_surface": "#4C4F69",
+    "scaffold": "#E6E9EF",
+    "muted": "#6C6F85",
+    "field_fill": "#EFF1F5",
+    "outline": "#CCD0DA",
+    "sidebar": "#4C4F69",
+    "sidebar_hover": "#5C5F77",
+    "sidebar_border": "#5C5F77",
+    "danger": "#D20F39"
+  },
+  "dark": {
+    "primary": "#94E2D5",
+    "on_primary": "#1E1E2E",
+    "surface": "#1E1E2E",
+    "on_surface": "#CDD6F4",
+    "scaffold": "#181825",
+    "muted": "#A6ADC8",
+    "field_fill": "#313244",
+    "outline": "#45475A",
+    "sidebar": "#11111B",
+    "sidebar_hover": "#313244",
+    "sidebar_border": "#313244",
+    "danger": "#F38BA8"
+  }
+}

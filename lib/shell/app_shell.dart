@@ -8,16 +8,21 @@ import 'package:invoices/features/settings/settings_page.dart';
 import 'package:invoices/app_info.dart';
 import 'package:invoices/shell/side_nav.dart';
 import 'package:invoices/shell/window_title_bar.dart';
+import 'package:invoices/theme/theme_catalog.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({
     super.key,
     required this.config,
+    required this.themes,
     required this.onThemeChanged,
+    required this.onColorThemeChanged,
   });
 
   final AppConfig config;
+  final ThemeCatalog themes;
   final ValueChanged<AppThemePreference> onThemeChanged;
+  final ValueChanged<String> onColorThemeChanged;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -61,7 +66,10 @@ class _AppShellState extends State<AppShell> {
       AppSection.company => const CompanyPage(),
       AppSection.settings => SettingsPage(
           theme: widget.config.theme,
+          colorTheme: widget.config.colorTheme,
+          themes: widget.themes,
           onThemeChanged: widget.onThemeChanged,
+          onColorThemeChanged: widget.onColorThemeChanged,
         ),
     };
   }

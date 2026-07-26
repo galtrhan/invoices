@@ -20,11 +20,11 @@ apply_standard_settings(${BINARY_NAME})
 # Add preprocessor definitions for the application ID.
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 
-# Debug builds read config.json from the project root. Release/profile use
+# Debug builds read config/config.json from the project root. Release/profile use
 # ~/.config/invoices/config.json via g_get_user_config_dir().
 get_filename_component(APP_PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
 target_compile_definitions(${BINARY_NAME} PRIVATE
-  "$<$<CONFIG:Debug>:APP_DEBUG_CONFIG_PATH=\"${APP_PROJECT_ROOT}/config.json\">"
+  "$<$<CONFIG:Debug>:APP_DEBUG_CONFIG_PATH=\"${APP_PROJECT_ROOT}/config/config.json\">"
 )
 
 # Add dependency libraries. Add any application-specific dependencies here.

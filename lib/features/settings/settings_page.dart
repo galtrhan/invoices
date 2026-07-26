@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 
 import 'package:invoices/config/app_config.dart';
+import 'package:invoices/theme/theme_catalog.dart';
 import 'package:invoices/widgets/page_chrome.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({
     super.key,
     required this.theme,
+    required this.colorTheme,
+    required this.themes,
     required this.onThemeChanged,
+    required this.onColorThemeChanged,
   });
 
   final AppThemePreference theme;
+  final String colorTheme;
+  final ThemeCatalog themes;
   final ValueChanged<AppThemePreference> onThemeChanged;
+  final ValueChanged<String> onColorThemeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +38,26 @@ class SettingsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: .start,
                   children: [
-                    const Text('Theme'),
+                    DropdownMenu<String>(
+                      key: ValueKey(colorTheme),
+                      initialSelection: colorTheme,
+                      label: const Text('Theme'),
+                      expandedInsets: .zero,
+                      onSelected: (value) {
+                        if (value != null) {
+                          onColorThemeChanged(value);
+                        }
+                      },
+                      dropdownMenuEntries: [
+                        for (final option in themes.themes)
+                          DropdownMenuEntry(
+                            value: option.name,
+                            label: option.name,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    const Text('Mode'),
                     const SizedBox(height: 12),
                     SegmentedButton<AppThemePreference>(
                       segments: const [

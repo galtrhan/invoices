@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:invoices/app_info.dart';
-import 'package:invoices/theme/app_theme.dart';
+import 'package:invoices/theme/theme_definition.dart';
 
 enum AppSection { invoices, clients, company, settings }
 
@@ -24,8 +24,12 @@ class SideNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final chrome = theme.extension<AppChromeColors>()!;
+    final scheme = theme.colorScheme;
+
     return ColoredBox(
-      color: AppTheme.ink,
+      color: chrome.sidebar,
       child: SizedBox(
         width: 220,
         child: Column(
@@ -48,6 +52,9 @@ class SideNav extends StatelessWidget {
                 label: item.$2,
                 icon: item.$3,
                 selected: section == item.$1,
+                selectedColor: scheme.primary,
+                selectedForeground: scheme.onPrimary,
+                hoverColor: chrome.sidebarHover,
                 onTap: () => onSectionSelected(item.$1),
               ),
             const Spacer(),
@@ -63,12 +70,18 @@ class _NavItem extends StatefulWidget {
     required this.label,
     required this.icon,
     required this.selected,
+    required this.selectedColor,
+    required this.selectedForeground,
+    required this.hoverColor,
     required this.onTap,
   });
 
   final String label;
   final IconData icon;
   final bool selected;
+  final Color selectedColor;
+  final Color selectedForeground;
+  final Color hoverColor;
   final VoidCallback onTap;
 
   @override
@@ -81,10 +94,11 @@ class _NavItemState extends State<_NavItem> {
   @override
   Widget build(BuildContext context) {
     final bg = widget.selected
-        ? AppTheme.accent
+        ? widget.selectedColor
         : _hover
-        ? const Color(0xFF243041)
+        ? widget.hoverColor
         : Colors.transparent;
+    final fg = widget.selected ? widget.selectedForeground : Colors.white;
 
     return Padding(
       padding: const .symmetric(horizontal: 10, vertical: 2),
@@ -101,12 +115,12 @@ class _NavItemState extends State<_NavItem> {
               padding: const .symmetric(horizontal: 12, vertical: 10),
               child: Row(
                 children: [
-                  Icon(widget.icon, size: 18, color: Colors.white),
+                  Icon(widget.icon, size: 18, color: fg),
                   const SizedBox(width: 10),
                   Text(
                     widget.label,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: fg,
                       fontSize: 13,
                       fontWeight:
                           widget.selected ? FontWeight.w600 : FontWeight.w500,

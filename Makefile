@@ -2,7 +2,7 @@ FLUTTER := $(shell command -v fvm >/dev/null 2>&1 && echo "fvm flutter" || echo 
 DEVICE  := linux
 BUNDLE  := build/linux/x64/release/bundle
 DIST    := dist
-CONFIG  := $(CURDIR)/config.json
+CONFIG  := $(CURDIR)/config/config.json
 
 .PHONY: run release clean
 

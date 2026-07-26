@@ -3,20 +3,26 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:invoices/theme/theme_definition.dart';
+
 enum AppThemePreference { light, dark }
 
 class AppConfig {
   const AppConfig({
     this.windowDecorations = false,
     this.theme = AppThemePreference.light,
+    this.colorTheme = ThemeDefinition.defaultName,
   });
 
   final bool windowDecorations;
   final AppThemePreference theme;
 
+  /// Theme `name` from JSON (or Default).
+  final String colorTheme;
+
   static const AppConfig defaults = AppConfig();
 
-  /// Debug (`make run`): project-local `config.json` (or `APP_CONFIG_PATH`).
+  /// Debug (`make run`): project-local `config/config.json` (or `APP_CONFIG_PATH`).
   /// Release (`make release`): `~/.config/invoices/config.json`.
   static String get configPath {
     const fromDefine = String.fromEnvironment('APP_CONFIG_PATH');
@@ -32,29 +38,37 @@ class AppConfig {
       return '$base/invoices/config.json';
     }
 
-    return 'config.json';
+    return 'config/config.json';
   }
+
+  /// `<configDir>/themes`.
+  static String get themesDirectory =>
+      '${File(configPath).parent.path}/themes';
 
   AppConfig copyWith({
     bool? windowDecorations,
     AppThemePreference? theme,
+    String? colorTheme,
   }) {
     return AppConfig(
       windowDecorations: windowDecorations ?? this.windowDecorations,
       theme: theme ?? this.theme,
+      colorTheme: colorTheme ?? this.colorTheme,
     );
   }
 
   Map<String, Object> toJson() => {
         'window_decorations': windowDecorations,
         'theme': theme == AppThemePreference.dark ? 'dark' : 'light',
+        'color_theme': colorTheme,
       };
 
-  static AppThemePreference _themeFromJson(Object? value) {
-    if (value == 'dark') {
-      return AppThemePreference.dark;
+  /// Accepts display names or legacy slugs (`tokyo_night` → `tokyo night`).
+  static String colorThemeFromJson(Object? value) {
+    if (value is! String || value.trim().isEmpty) {
+      return ThemeDefinition.defaultName;
     }
-    return AppThemePreference.light;
+    return value.trim().replaceAll('_', ' ');
   }
 
   static Future<AppConfig> load() async {
@@ -72,7 +86,10 @@ class AppConfig {
         windowDecorations: decoded['window_decorations'] is bool
             ? decoded['window_decorations'] as bool
             : false,
-        theme: _themeFromJson(decoded['theme']),
+        theme: decoded['theme'] == 'dark'
+            ? AppThemePreference.dark
+            : AppThemePreference.light,
+        colorTheme: colorThemeFromJson(decoded['color_theme']),
       );
     } on FormatException {
       return defaults;
