@@ -75,6 +75,9 @@ class LocalizationDefinition {
   String get clientsCreate => _('clients_create');
   String get clientsSave => _('clients_save');
   String get clientsViewHistory => _('clients_view_history');
+  String get logoUpload => _('logo_upload');
+  String get logoRemove => _('logo_remove');
+  String get logoImportFailed => _('logo_import_failed');
 
   // Company
   String get companyTitle => _('company_title');
@@ -161,6 +164,9 @@ class LocalizationDefinition {
       'clients_field_notes': 'Contact notes',
       'clients_logo_title': 'Logo',
       'clients_logo_subtitle': 'Used on invoices for this client when relevant.',
+      'logo_upload': 'Upload',
+      'logo_remove': 'Remove',
+      'logo_import_failed': 'Could not import image',
       'clients_create': 'Create client',
       'clients_save': 'Save changes',
       'clients_view_history': 'View history',

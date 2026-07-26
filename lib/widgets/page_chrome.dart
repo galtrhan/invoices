@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 BoxDecoration _surfacePanelDecoration(ThemeData theme) {
@@ -132,19 +134,34 @@ class LogoUploadTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.icon,
+    this.uploadLabel,
+    this.removeLabel,
     this.size = 64,
+    this.imagePath,
+    this.onUpload,
+    this.onRemove,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
+  final String? uploadLabel;
+  final String? removeLabel;
   final double size;
+  final String? imagePath;
+  final VoidCallback? onUpload;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final muted = theme.textTheme.bodyMedium?.color;
+    final resolvedImage = imagePath;
+    final hasImage = resolvedImage != null && resolvedImage.isNotEmpty;
+    final showUpload = onUpload != null && uploadLabel != null;
+    final showRemove =
+        hasImage && onRemove != null && removeLabel != null;
 
     return DecoratedBox(
       decoration: _surfacePanelDecoration(theme),
@@ -155,13 +172,25 @@ class LogoUploadTile extends StatelessWidget {
             Container(
               width: size,
               height: size,
+              clipBehavior: .antiAlias,
               alignment: .center,
               decoration: BoxDecoration(
                 color: theme.scaffoldBackgroundColor,
                 borderRadius: .circular(6),
                 border: Border.all(color: theme.dividerColor),
               ),
-              child: Icon(icon, color: muted),
+              child: hasImage
+                  ? Image.file(
+                      File(resolvedImage),
+                      width: size,
+                      height: size,
+                      cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
+                          .round(),
+                      fit: .cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Icon(icon, color: muted),
+                    )
+                  : Icon(icon, color: muted),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -174,7 +203,12 @@ class LogoUploadTile extends StatelessWidget {
                 ],
               ),
             ),
-            OutlinedButton(onPressed: () {}, child: const Text('Upload')),
+            if (showRemove) ...[
+              OutlinedButton(onPressed: onRemove, child: Text(removeLabel!)),
+              if (showUpload) const SizedBox(width: 8),
+            ],
+            if (showUpload)
+              OutlinedButton(onPressed: onUpload, child: Text(uploadLabel!)),
           ],
         ),
       ),

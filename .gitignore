@@ -57,3 +57,6 @@ invoices.db
 *.db-journal
 *.db-wal
 *.db-shm
+
+# Imported media (logos, etc.)
+config/media/

@@ -36,6 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   window_manager: ^0.5.2
   drift: ^2.28.1
+  file_picker: ^10.2.0
+  image: ^4.5.4
+  path: ^1.9.1
   sqlite3_flutter_libs: ^0.5.39
 
 dev_dependencies:

@@ -58,6 +58,8 @@ class AppConfig {
 
   static String get databasePath => configSubdirectory('invoices.db');
 
+  static String get mediaDirectory => configSubdirectory('media');
+
   AppConfig copyWith({
     bool? windowDecorations,
     AppThemePreference? theme,
