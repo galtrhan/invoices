@@ -1,10 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:invoices/config/app_config.dart';
+import 'package:invoices/l10n/localization_catalog.dart';
+import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/main.dart';
+import 'package:invoices/theme/theme_catalog.dart';
+import 'package:invoices/theme/theme_definition.dart';
 
 void main() {
   testWidgets('Shows invoices shell home', (WidgetTester tester) async {
-    await tester.pumpWidget(const InvoicesApp(config: AppConfig.defaults));
+    await tester.pumpWidget(
+      InvoicesApp(
+        config: AppConfig.defaults,
+        themes: ThemeCatalog([ThemeDefinition.builtinDefault]),
+        localizations: LocalizationCatalog([
+          LocalizationDefinition.builtinEnglish,
+        ]),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('New invoice'), findsWidgets);

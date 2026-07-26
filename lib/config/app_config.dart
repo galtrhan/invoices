@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/theme/theme_definition.dart';
 
 enum AppThemePreference { light, dark }
@@ -12,6 +13,7 @@ class AppConfig {
     this.windowDecorations = false,
     this.theme = AppThemePreference.light,
     this.colorTheme = ThemeDefinition.defaultName,
+    this.localization = LocalizationDefinition.defaultName,
   });
 
   final bool windowDecorations;
@@ -19,6 +21,9 @@ class AppConfig {
 
   /// Theme `name` from JSON (or Default).
   final String colorTheme;
+
+  /// Localization `name` from JSON (or English).
+  final String localization;
 
   static const AppConfig defaults = AppConfig();
 
@@ -41,19 +46,27 @@ class AppConfig {
     return 'config/config.json';
   }
 
+  static String configSubdirectory(String segment) =>
+      '${File(configPath).parent.path}/$segment';
+
   /// `<configDir>/themes`.
-  static String get themesDirectory =>
-      '${File(configPath).parent.path}/themes';
+  static String get themesDirectory => configSubdirectory('themes');
+
+  /// `<configDir>/localizations`.
+  static String get localizationsDirectory =>
+      configSubdirectory('localizations');
 
   AppConfig copyWith({
     bool? windowDecorations,
     AppThemePreference? theme,
     String? colorTheme,
+    String? localization,
   }) {
     return AppConfig(
       windowDecorations: windowDecorations ?? this.windowDecorations,
       theme: theme ?? this.theme,
       colorTheme: colorTheme ?? this.colorTheme,
+      localization: localization ?? this.localization,
     );
   }
 
@@ -61,15 +74,22 @@ class AppConfig {
         'window_decorations': windowDecorations,
         'theme': theme == AppThemePreference.dark ? 'dark' : 'light',
         'color_theme': colorTheme,
+        'localization': localization,
       };
 
   /// Accepts display names or legacy slugs (`tokyo_night` → `tokyo night`).
-  static String colorThemeFromJson(Object? value) {
+  static String namedPreferenceFromJson(Object? value, String defaultName) {
     if (value is! String || value.trim().isEmpty) {
-      return ThemeDefinition.defaultName;
+      return defaultName;
     }
     return value.trim().replaceAll('_', ' ');
   }
+
+  static String colorThemeFromJson(Object? value) =>
+      namedPreferenceFromJson(value, ThemeDefinition.defaultName);
+
+  static String localizationFromJson(Object? value) =>
+      namedPreferenceFromJson(value, LocalizationDefinition.defaultName);
 
   static Future<AppConfig> load() async {
     final file = File(configPath);
@@ -90,6 +110,7 @@ class AppConfig {
             ? AppThemePreference.dark
             : AppThemePreference.light,
         colorTheme: colorThemeFromJson(decoded['color_theme']),
+        localization: localizationFromJson(decoded['localization']),
       );
     } on FormatException {
       return defaults;

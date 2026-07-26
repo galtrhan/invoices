@@ -1,5 +1,6 @@
 {
   "window_decorations": false,
-  "theme": "light",
-  "color_theme": "Default"
+  "theme": "dark",
+  "color_theme": "Gruvbox",
+  "localization": "Latviešu"
 }

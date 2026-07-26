@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/widgets/master_detail.dart';
 import 'package:invoices/widgets/page_chrome.dart';
 
@@ -18,17 +19,19 @@ class _ClientsPageState extends State<ClientsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Column(
       crossAxisAlignment: .stretch,
       children: [
         PageToolbar(
-          title: 'Clients',
-          subtitle: 'Invoice parties with contact details and logo',
+          title: l10n.clientsTitle,
+          subtitle: l10n.clientsSubtitle,
           actions: [
             FilledButton.icon(
               onPressed: _startCreate,
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('New client'),
+              label: Text(l10n.clientsNew),
             ),
           ],
         ),
@@ -49,10 +52,9 @@ class _ClientsPageState extends State<ClientsPage> {
               _Create() => const _ClientEditor.create(),
               _Selected(:final client) => _ClientEditor.view(client),
               _Empty() => EmptyPane(
-                title: 'No client selected',
-                message:
-                    'Clients supply the bill-to block on invoices. Edits are versioned so past invoices keep historical details.',
-                actionLabel: 'New client',
+                title: l10n.clientsNoneSelectedTitle,
+                message: l10n.clientsNoneSelectedMessage,
+                actionLabel: l10n.clientsNew,
                 onAction: _startCreate,
               ),
             },
@@ -110,11 +112,13 @@ class _ClientList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     if (clients.isEmpty) {
       return EmptyPane(
-        title: 'No clients yet',
-        message: 'Add the businesses or people you invoice.',
-        actionLabel: 'New client',
+        title: l10n.clientsEmptyTitle,
+        message: l10n.clientsEmptyMessage,
+        actionLabel: l10n.clientsNew,
         onAction: onCreate,
       );
     }
@@ -145,6 +149,7 @@ class _ClientEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final isNew = client == null;
 
     return FormPageBody(
@@ -152,39 +157,44 @@ class _ClientEditor extends StatelessWidget {
         crossAxisAlignment: .start,
         children: [
           Text(
-            isNew ? 'New client' : client!.name,
+            isNew ? l10n.clientsEditorNew : client!.name,
             style: textTheme.headlineMedium,
           ),
           const SizedBox(height: 6),
-          Text(
-            'Changes are kept historically so regenerating an old invoice can use the details from that time.',
-            style: textTheme.bodyMedium,
-          ),
+          Text(l10n.clientsEditorHint, style: textTheme.bodyMedium),
           const SizedBox(height: 24),
-          const FieldGrid(
+          FieldGrid(
             children: [
-              TextField(decoration: InputDecoration(labelText: 'Name')),
-              TextField(decoration: InputDecoration(labelText: 'Email')),
-              TextField(decoration: InputDecoration(labelText: 'Phone')),
-              TextField(decoration: InputDecoration(labelText: 'Tax / VAT ID')),
+              TextField(
+                decoration: InputDecoration(labelText: l10n.clientsFieldName),
+              ),
+              TextField(
+                decoration: InputDecoration(labelText: l10n.clientsFieldEmail),
+              ),
+              TextField(
+                decoration: InputDecoration(labelText: l10n.clientsFieldPhone),
+              ),
+              TextField(
+                decoration: InputDecoration(labelText: l10n.clientsFieldTax),
+              ),
             ],
           ),
           const SizedBox(height: 16),
-          const TextField(
-            decoration: InputDecoration(labelText: 'Address'),
+          TextField(
+            decoration: InputDecoration(labelText: l10n.clientsFieldAddress),
             minLines: 3,
             maxLines: 4,
           ),
           const SizedBox(height: 16),
-          const TextField(
-            decoration: InputDecoration(labelText: 'Contact notes'),
+          TextField(
+            decoration: InputDecoration(labelText: l10n.clientsFieldNotes),
             minLines: 2,
             maxLines: 3,
           ),
           const SizedBox(height: 16),
-          const LogoUploadTile(
-            title: 'Logo',
-            subtitle: 'Used on invoices for this client when relevant.',
+          LogoUploadTile(
+            title: l10n.clientsLogoTitle,
+            subtitle: l10n.clientsLogoSubtitle,
             icon: Icons.image_outlined,
           ),
           const SizedBox(height: 24),
@@ -192,13 +202,13 @@ class _ClientEditor extends StatelessWidget {
             children: [
               FilledButton(
                 onPressed: () {},
-                child: Text(isNew ? 'Create client' : 'Save changes'),
+                child: Text(isNew ? l10n.clientsCreate : l10n.clientsSave),
               ),
               const SizedBox(width: 8),
               if (!isNew)
                 OutlinedButton(
                   onPressed: () {},
-                  child: const Text('View history'),
+                  child: Text(l10n.clientsViewHistory),
                 ),
             ],
           ),

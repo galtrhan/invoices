@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:invoices/app_info.dart';
+import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/theme/theme_definition.dart';
 
 enum AppSection { invoices, clients, company, settings }
@@ -15,18 +16,19 @@ class SideNav extends StatelessWidget {
   final AppSection section;
   final ValueChanged<AppSection> onSectionSelected;
 
-  static const _items = [
-    (AppSection.invoices, 'Invoices', Icons.receipt_long_outlined),
-    (AppSection.clients, 'Clients', Icons.people_outline),
-    (AppSection.company, 'Company', Icons.apartment_outlined),
-    (AppSection.settings, 'Settings', Icons.settings_outlined),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final chrome = theme.extension<AppChromeColors>()!;
     final scheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
+
+    final items = [
+      (AppSection.invoices, l10n.navInvoices, Icons.receipt_long_outlined),
+      (AppSection.clients, l10n.navClients, Icons.people_outline),
+      (AppSection.company, l10n.navCompany, Icons.apartment_outlined),
+      (AppSection.settings, l10n.navSettings, Icons.settings_outlined),
+    ];
 
     return ColoredBox(
       color: chrome.sidebar,
@@ -47,7 +49,7 @@ class SideNav extends StatelessWidget {
                 ),
               ),
             ),
-            for (final item in _items)
+            for (final item in items)
               _NavItem(
                 label: item.$2,
                 icon: item.$3,

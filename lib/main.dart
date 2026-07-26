@@ -3,6 +3,8 @@ import 'package:window_manager/window_manager.dart';
 
 import 'package:invoices/app_info.dart';
 import 'package:invoices/config/app_config.dart';
+import 'package:invoices/l10n/localization_catalog.dart';
+import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/shell/app_shell.dart';
 import 'package:invoices/theme/theme_catalog.dart';
 
@@ -10,12 +12,21 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
 
-  final themes = await ThemeCatalog.load(AppConfig.themesDirectory);
-  final loaded = await AppConfig.load();
-  final resolvedName = themes.resolve(loaded.colorTheme).name;
-  final config = loaded.colorTheme == resolvedName
-      ? loaded
-      : loaded.copyWith(colorTheme: resolvedName);
+  final results = await (
+    ThemeCatalog.load(AppConfig.themesDirectory),
+    LocalizationCatalog.load(AppConfig.localizationsDirectory),
+    AppConfig.load(),
+  ).wait;
+  final themes = results.$1;
+  final localizations = results.$2;
+  final loaded = results.$3;
+
+  final resolvedTheme = themes.resolve(loaded.colorTheme).name;
+  final resolvedLocale = localizations.resolve(loaded.localization).name;
+  final config = loaded.copyWith(
+    colorTheme: resolvedTheme,
+    localization: resolvedLocale,
+  );
 
   const windowOptions = WindowOptions(
     size: Size(1280, 720),
@@ -31,7 +42,13 @@ Future<void> main() async {
     await windowManager.focus();
   });
 
-  runApp(InvoicesApp(config: config, themes: themes));
+  runApp(
+    InvoicesApp(
+      config: config,
+      themes: themes,
+      localizations: localizations,
+    ),
+  );
 }
 
 class InvoicesApp extends StatefulWidget {
@@ -39,10 +56,12 @@ class InvoicesApp extends StatefulWidget {
     super.key,
     required this.config,
     required this.themes,
+    required this.localizations,
   });
 
   final AppConfig config;
   final ThemeCatalog themes;
+  final LocalizationCatalog localizations;
 
   @override
   State<InvoicesApp> createState() => _InvoicesAppState();
@@ -64,23 +83,31 @@ class _InvoicesAppState extends State<InvoicesApp> {
 
   @override
   Widget build(BuildContext context) {
-    final selected = widget.themes.resolve(_config.colorTheme);
+    final selectedTheme = widget.themes.resolve(_config.colorTheme);
+    final selectedLocale =
+        widget.localizations.resolve(_config.localization);
 
     return MaterialApp(
       title: AppInfo.name,
       debugShowCheckedModeBanner: false,
-      theme: selected.lightTheme,
-      darkTheme: selected.darkTheme,
+      theme: selectedTheme.lightTheme,
+      darkTheme: selectedTheme.darkTheme,
       themeMode: switch (_config.theme) {
         AppThemePreference.dark => ThemeMode.dark,
         AppThemePreference.light => ThemeMode.light,
       },
-      home: AppShell(
-        config: _config,
-        themes: widget.themes,
-        onThemeChanged: (theme) => _persist(_config.copyWith(theme: theme)),
-        onColorThemeChanged: (colorTheme) =>
-            _persist(_config.copyWith(colorTheme: colorTheme)),
+      home: AppLocalizations(
+        strings: selectedLocale,
+        child: AppShell(
+          config: _config,
+          themes: widget.themes,
+          localizations: widget.localizations,
+          onThemeChanged: (theme) => _persist(_config.copyWith(theme: theme)),
+          onColorThemeChanged: (colorTheme) =>
+              _persist(_config.copyWith(colorTheme: colorTheme)),
+          onLocalizationChanged: (localization) =>
+              _persist(_config.copyWith(localization: localization)),
+        ),
       ),
     );
   }

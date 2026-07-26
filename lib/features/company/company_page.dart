@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/widgets/page_chrome.dart';
 
 class CompanyPage extends StatelessWidget {
@@ -8,13 +9,14 @@ class CompanyPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: .stretch,
       children: [
-        const PageToolbar(
-          title: 'Company',
-          subtitle: 'Your business details for the invoice header',
+        PageToolbar(
+          title: l10n.companyTitle,
+          subtitle: l10n.companySubtitle,
         ),
         Expanded(
           child: FormPageBody(
@@ -23,51 +25,55 @@ class CompanyPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: .start,
                 children: [
-                  Text('Business profile', style: textTheme.headlineMedium),
+                  Text(l10n.companyProfile, style: textTheme.headlineMedium),
                   const SizedBox(height: 6),
-                  Text(
-                    'Edits are versioned like clients. Past invoices keep the company block from when they were issued.',
-                    style: textTheme.bodyMedium,
-                  ),
+                  Text(l10n.companyHint, style: textTheme.bodyMedium),
                   const SizedBox(height: 24),
-                  const LogoUploadTile(
-                    title: 'Company logo',
-                    subtitle: 'Shown on every new invoice snapshot.',
+                  LogoUploadTile(
+                    title: l10n.companyLogoTitle,
+                    subtitle: l10n.companyLogoSubtitle,
                     icon: Icons.apartment_outlined,
                     size: 72,
                   ),
                   const SizedBox(height: 16),
-                  const TextField(
-                    decoration: InputDecoration(labelText: 'Company name'),
+                  TextField(
+                    decoration: InputDecoration(labelText: l10n.companyFieldName),
                   ),
                   const SizedBox(height: 12),
-                  const FieldGrid(
+                  FieldGrid(
                     children: [
-                      TextField(decoration: InputDecoration(labelText: 'Email')),
-                      TextField(decoration: InputDecoration(labelText: 'Phone')),
+                      TextField(
+                        decoration:
+                            InputDecoration(labelText: l10n.companyFieldEmail),
+                      ),
+                      TextField(
+                        decoration:
+                            InputDecoration(labelText: l10n.companyFieldPhone),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const TextField(
-                    decoration: InputDecoration(labelText: 'Tax / VAT ID'),
+                  TextField(
+                    decoration: InputDecoration(labelText: l10n.companyFieldTax),
                   ),
                   const SizedBox(height: 12),
-                  const TextField(
-                    decoration: InputDecoration(labelText: 'Address'),
+                  TextField(
+                    decoration:
+                        InputDecoration(labelText: l10n.companyFieldAddress),
                     minLines: 3,
                     maxLines: 4,
                   ),
                   const SizedBox(height: 12),
-                  const TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Payment / bank details',
-                    ),
+                  TextField(
+                    decoration:
+                        InputDecoration(labelText: l10n.companyFieldPayment),
                     minLines: 3,
                     maxLines: 4,
                   ),
                   const SizedBox(height: 12),
-                  const TextField(
-                    decoration: InputDecoration(labelText: 'Contact notes'),
+                  TextField(
+                    decoration:
+                        InputDecoration(labelText: l10n.companyFieldNotes),
                     minLines: 2,
                     maxLines: 3,
                   ),
@@ -76,12 +82,12 @@ class CompanyPage extends StatelessWidget {
                     children: [
                       FilledButton(
                         onPressed: () {},
-                        child: const Text('Save company'),
+                        child: Text(l10n.companySave),
                       ),
                       const SizedBox(width: 8),
                       OutlinedButton(
                         onPressed: () {},
-                        child: const Text('View history'),
+                        child: Text(l10n.companyViewHistory),
                       ),
                     ],
                   ),
