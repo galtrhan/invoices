@@ -84,6 +84,7 @@ class LocalizationDefinition {
   String get companySubtitle => _('company_subtitle');
   String get companyProfile => _('company_profile');
   String get companyHint => _('company_hint');
+  String get companyCardEmpty => _('company_card_empty');
   String get companyLogoTitle => _('company_logo_title');
   String get companyLogoSubtitle => _('company_logo_subtitle');
   String get companyFieldName => _('company_field_name');
@@ -175,6 +176,7 @@ class LocalizationDefinition {
       'company_profile': 'Business profile',
       'company_hint':
           'Edits are versioned like clients. Past invoices keep the company block from when they were issued.',
+      'company_card_empty': 'Your company',
       'company_logo_title': 'Company logo',
       'company_logo_subtitle': 'Shown on every new invoice snapshot.',
       'company_field_name': 'Company name',

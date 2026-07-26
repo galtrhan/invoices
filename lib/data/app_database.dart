@@ -53,6 +53,13 @@ class AppDatabase extends _$AppDatabase {
     return row ?? emptyCompany;
   }
 
+  Stream<CompanyProfile> watchCompany() {
+    return (select(companyProfiles)
+          ..where((row) => row.id.equals(companyRowId)))
+        .watchSingleOrNull()
+        .map((row) => row ?? emptyCompany);
+  }
+
   Future<void> saveCompany(CompanyProfilesCompanion data) {
     return into(companyProfiles).insertOnConflictUpdate(
       data.copyWith(

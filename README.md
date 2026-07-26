@@ -20,11 +20,22 @@ fvm flutter doctor
 | `make run` | Debug run on Linux; uses `./config/config.json` |
 | `make release` | Release build into `dist/` |
 | `make clean` | Clean Flutter build output and `dist/` |
+| `make hooks` | Enable tracked git hooks (`.githooks/`) |
 
 ```bash
+make hooks     # once per clone
 make run
 make release   # then: ./dist/invoices
 ```
+
+## Git hooks
+
+Tracked under `.githooks/`. After clone, run `make hooks` once so Git uses them
+(`core.hooksPath=.githooks`).
+
+| Hook | Runs |
+|------|------|
+| `pre-commit` | `fvm flutter analyze` (or `flutter analyze` if FVM is missing) |
 
 ## Config
 

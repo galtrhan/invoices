@@ -44,6 +44,7 @@ class _AppShellState extends State<AppShell> {
         crossAxisAlignment: .stretch,
         children: [
           SideNav(
+            database: widget.database,
             section: _section,
             onSectionSelected: (section) {
               setState(() => _section = section);

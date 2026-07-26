@@ -4,7 +4,7 @@ BUNDLE  := build/linux/x64/release/bundle
 DIST    := dist
 CONFIG  := $(CURDIR)/config/config.json
 
-.PHONY: run release clean
+.PHONY: run release clean hooks
 
 run:
 	$(FLUTTER) run -d $(DEVICE) --dart-define=APP_CONFIG_PATH=$(CONFIG)
@@ -22,3 +22,8 @@ release:
 clean:
 	$(FLUTTER) clean
 	@rm -rf $(DIST)
+
+hooks:
+	git config core.hooksPath .githooks
+	@chmod +x .githooks/pre-commit
+	@echo "Git hooks enabled (core.hooksPath=.githooks)"
