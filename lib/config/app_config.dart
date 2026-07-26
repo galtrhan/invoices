@@ -56,6 +56,8 @@ class AppConfig {
   static String get localizationsDirectory =>
       configSubdirectory('localizations');
 
+  static String get databasePath => configSubdirectory('invoices.db');
+
   AppConfig copyWith({
     bool? windowDecorations,
     AppThemePreference? theme,

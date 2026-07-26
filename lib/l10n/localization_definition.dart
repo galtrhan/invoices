@@ -91,6 +91,9 @@ class LocalizationDefinition {
   String get companyFieldPayment => _('company_field_payment');
   String get companyFieldNotes => _('company_field_notes');
   String get companySave => _('company_save');
+  String get companySaved => _('company_saved');
+  String get companySaveFailed => _('company_save_failed');
+  String get companyLoadFailed => _('company_load_failed');
   String get companyViewHistory => _('company_view_history');
 
   static final LocalizationDefinition builtinEnglish = LocalizationDefinition(
@@ -176,6 +179,9 @@ class LocalizationDefinition {
       'company_field_payment': 'Payment / bank details',
       'company_field_notes': 'Contact notes',
       'company_save': 'Save company',
+      'company_saved': 'Company saved',
+      'company_save_failed': 'Could not save company',
+      'company_load_failed': 'Could not load company',
       'company_view_history': 'View history',
     },
   );

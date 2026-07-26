@@ -68,6 +68,9 @@
     "company_field_payment": "Maksājuma / bankas dati",
     "company_field_notes": "Kontaktpiezīmes",
     "company_save": "Saglabāt uzņēmumu",
+    "company_saved": "Uzņēmums saglabāts",
+    "company_save_failed": "Neizdevās saglabāt uzņēmumu",
+    "company_load_failed": "Neizdevās ielādēt uzņēmumu",
     "company_view_history": "Skatīt vēsturi"
   }
 }

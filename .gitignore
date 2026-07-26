@@ -50,3 +50,10 @@ app.*.map.json
 
 # Local notes
 todo.md
+
+# Local SQLite business data (debug path under config/)
+invoices.db
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

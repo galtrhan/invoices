@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:invoices/config/app_config.dart';
+import 'package:invoices/data/app_database.dart';
 import 'package:invoices/features/clients/clients_page.dart';
 import 'package:invoices/features/company/company_page.dart';
 import 'package:invoices/features/invoices/invoices_page.dart';
@@ -17,6 +18,7 @@ class AppShell extends StatefulWidget {
     required this.config,
     required this.themes,
     required this.localizations,
+    required this.database,
     required this.onThemeChanged,
     required this.onColorThemeChanged,
     required this.onLocalizationChanged,
@@ -25,6 +27,7 @@ class AppShell extends StatefulWidget {
   final AppConfig config;
   final ThemeCatalog themes;
   final LocalizationCatalog localizations;
+  final AppDatabase database;
   final ValueChanged<AppThemePreference> onThemeChanged;
   final ValueChanged<String> onColorThemeChanged;
   final ValueChanged<String> onLocalizationChanged;
@@ -68,7 +71,7 @@ class _AppShellState extends State<AppShell> {
     return switch (section) {
       AppSection.invoices => const InvoicesPage(),
       AppSection.clients => const ClientsPage(),
-      AppSection.company => const CompanyPage(),
+      AppSection.company => CompanyPage(database: widget.database),
       AppSection.settings => SettingsPage(
           theme: widget.config.theme,
           colorTheme: widget.config.colorTheme,

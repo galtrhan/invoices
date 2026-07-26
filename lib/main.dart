@@ -3,6 +3,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'package:invoices/app_info.dart';
 import 'package:invoices/config/app_config.dart';
+import 'package:invoices/data/app_database.dart';
 import 'package:invoices/l10n/localization_catalog.dart';
 import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/shell/app_shell.dart';
@@ -20,6 +21,7 @@ Future<void> main() async {
   final themes = results.$1;
   final localizations = results.$2;
   final loaded = results.$3;
+  final database = AppDatabase();
 
   final resolvedTheme = themes.resolve(loaded.colorTheme).name;
   final resolvedLocale = localizations.resolve(loaded.localization).name;
@@ -47,6 +49,7 @@ Future<void> main() async {
       config: config,
       themes: themes,
       localizations: localizations,
+      database: database,
     ),
   );
 }
@@ -57,11 +60,13 @@ class InvoicesApp extends StatefulWidget {
     required this.config,
     required this.themes,
     required this.localizations,
+    required this.database,
   });
 
   final AppConfig config;
   final ThemeCatalog themes;
   final LocalizationCatalog localizations;
+  final AppDatabase database;
 
   @override
   State<InvoicesApp> createState() => _InvoicesAppState();
@@ -74,6 +79,12 @@ class _InvoicesAppState extends State<InvoicesApp> {
   void initState() {
     super.initState();
     _config = widget.config;
+  }
+
+  @override
+  void dispose() {
+    widget.database.close();
+    super.dispose();
   }
 
   Future<void> _persist(AppConfig next) async {
@@ -102,6 +113,7 @@ class _InvoicesAppState extends State<InvoicesApp> {
           config: _config,
           themes: widget.themes,
           localizations: widget.localizations,
+          database: widget.database,
           onThemeChanged: (theme) => _persist(_config.copyWith(theme: theme)),
           onColorThemeChanged: (colorTheme) =>
               _persist(_config.copyWith(colorTheme: colorTheme)),
