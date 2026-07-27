@@ -1,6 +1,6 @@
 # Invoices
 
-Linux desktop app for creating client invoices. Flutter only — no mobile/web targets for now.
+Linux desktop app that creates client invoices. The app targets Flutter on Linux only. It does not target mobile or web.
 
 ## Requirements
 
@@ -17,9 +17,9 @@ fvm flutter doctor
 
 | Command | Description |
 |---------|-------------|
-| `make run` | Debug run on Linux; uses `./config/config.json` |
+| `make run` | Debug run on Linux. Uses `./config/config.json`. |
 | `make release` | Release build into `dist/` |
-| `make clean` | Clean Flutter build output and `dist/` |
+| `make clean` | Remove Flutter build output and `dist/` |
 | `make hooks` | Enable tracked git hooks (`.githooks/`) |
 
 ```bash
@@ -30,8 +30,7 @@ make release   # then: ./dist/invoices
 
 ## Git hooks
 
-Tracked under `.githooks/`. After clone, run `make hooks` once so Git uses them
-(`core.hooksPath=.githooks`).
+Hooks live in `.githooks/`. After you clone, run `make hooks` once so Git uses them (`core.hooksPath=.githooks`).
 
 | Hook | Runs |
 |------|------|
@@ -39,7 +38,7 @@ Tracked under `.githooks/`. After clone, run `make hooks` once so Git uses them
 
 ## Config
 
-Tracked under `config/` in the repo. Missing keys fall back to defaults.
+Config files live under `config/` in the repo. For missing keys, the app uses defaults.
 
 | Build | Preferences | Themes | Localizations |
 |-------|-------------|--------|---------------|
@@ -59,15 +58,14 @@ Tracked under `config/` in the repo. Missing keys fall back to defaults.
 
 | Key | Values | Notes |
 |-----|--------|-------|
-| `window_decorations` | `true` / `false` | Native GTK title bar (default `true`; set `false` for borderless, e.g. Hyprland) |
-| `theme` | `"light"` / `"dark"` | Mode; also set in **Settings → Appearance** |
-| `color_theme` | theme `name` string | Must match a loaded theme’s `name`, or `"Default"` |
-| `localization` | localization `name` string | Must match a loaded pack’s `name`, or `"English"` |
+| `window_decorations` | `true` / `false` | Native GTK title bar. Default is `true`. Set `false` for a borderless window (for example Hyprland). |
+| `theme` | `"light"` / `"dark"` | Mode. You can also set this in **Settings → Appearance**. |
+| `color_theme` | theme `name` string | Must match a loaded theme `name`, or `"Default"`. |
+| `localization` | localization `name` string | Must match a loaded pack `name`, or `"English"`. |
 
 ### Themes (`themes/*.json`)
 
-Built-in **Default** is always available. Custom themes are JSON files next to
-the preferences file. The **filename is ignored**; each file must include:
+The built-in **Default** theme is always available. Custom themes are JSON files next to the preferences file. The app ignores the filename. Each file must include:
 
 - `name` — shown in Settings and stored as `color_theme`
 - `light` / `dark` — full color maps for each mode
@@ -108,25 +106,18 @@ Shipped themes: **Catppuccin**, **Nord**, **Tokyo Night**, **Gruvbox**.
 }
 ```
 
-Add or edit files under `themes/`, then restart the app. Pick theme and mode in
-**Settings → Appearance**.
+Add or edit files under `themes/`, then restart the app. Pick theme and mode in **Settings → Appearance**.
 
-For release builds, copy `config/themes/` into `~/.config/invoices/themes/`
-(or point `APP_CONFIG_PATH` at a config file whose sibling `themes/` folder
-holds the JSON).
+For release builds, copy `config/themes/` into `~/.config/invoices/themes/`. You can also set `APP_CONFIG_PATH` to a config file whose sibling `themes/` folder holds the JSON.
 
 ### Localizations (`localizations/*.json`)
 
-Built-in **English** is always available (defined in Dart under `lib/l10n/`).
-Custom packs are JSON files next to the preferences file. The **filename is
-ignored**; each file must include:
+Built-in **English** is always available (defined in Dart under `lib/l10n/`). Custom packs are JSON files next to the preferences file. The app ignores the filename. Each file must include:
 
 - `name` — shown in Settings and stored as `localization`
 - `strings` — map of message keys to translated text
 
-Only override the keys you need; missing keys fall back to English at load
-time. Message keys match the getters in `LocalizationDefinition` (e.g.
-`nav_invoices`, `settings_title`, `invoices_new`).
+Override only the keys you need. For missing keys, the app uses English at load time. Message keys match the getters in `LocalizationDefinition` (for example `nav_invoices`, `settings_title`, `invoices_new`).
 
 Shipped pack: **Latviešu** (`config/localizations/latvian.json`).
 
@@ -140,15 +131,11 @@ Shipped pack: **Latviešu** (`config/localizations/latvian.json`).
 }
 ```
 
-Add or edit files under `localizations/`, then restart the app. Pick language in
-**Settings → Language** (persisted as `localization` in `config.json`).
+Add or edit files under `localizations/`, then restart the app. Pick language in **Settings → Language**. The app stores the choice as `localization` in `config.json`.
 
-For release builds, copy `config/localizations/` into
-`~/.config/invoices/localizations/` (same sibling-folder rules as themes).
+For release builds, copy `config/localizations/` into `~/.config/invoices/localizations/`. Use the same sibling-folder rules as themes.
 
-Themes and localizations both load through the shared helper in
-`lib/config/named_json_catalog.dart` (scan `*.json`, skip invalid/duplicates,
-prepend the built-in entry).
+Themes and localizations both use the shared helper in `lib/config/named_json_catalog.dart`. That helper scans `*.json`, skips invalid or duplicate entries, and adds the built-in entry first.
 
 ## Layout
 
@@ -171,9 +158,9 @@ linux/runner/ native GTK bootstrap + decoration config
 
 - Dart / Flutter with `package:flutter_lints`
 - Prefer small feature folders over deep nesting
-- Shared chrome/widgets before duplicating page UI
-- Keep Linux runner changes minimal; prefer Dart for app logic
-- Config defaults must stay in sync in Dart (`AppConfig`) and C++ (`app_config.cc`) when native options are added
+- Use shared chrome and widgets before you copy page UI
+- Keep Linux runner changes small. Prefer Dart for app logic.
+- When you add native options, keep config defaults in sync in Dart (`AppConfig`) and C++ (`app_config.cc`)
 
 ```bash
 fvm flutter analyze
