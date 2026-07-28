@@ -28,6 +28,7 @@ class InvoiceTemplateDefinition {
     required this.spacingAfterHeader,
     required this.spacingAfterParties,
     required this.spacingBeforeTable,
+    this.font,
   });
 
   static const defaultName = 'Default';
@@ -62,6 +63,10 @@ class InvoiceTemplateDefinition {
   final double spacingAfterHeader;
   final double spacingAfterParties;
   final double spacingBeforeTable;
+
+  /// Optional font family name override. Takes priority over the app-level
+  /// PDF font setting.
+  final String? font;
 
   /// Matches the current hardcoded layout in [buildInvoicePdf].
   static const InvoiceTemplateDefinition builtinDefault =
@@ -140,6 +145,7 @@ class InvoiceTemplateDefinition {
           _double(spacing['after_parties'], base.spacingAfterParties),
       spacingBeforeTable:
           _double(spacing['before_table'], base.spacingBeforeTable),
+      font: _string(json['font']),
     );
   }
 }
@@ -166,6 +172,14 @@ bool _bool(Object? value, bool fallback) {
     return value;
   }
   return fallback;
+}
+
+String? _string(Object? value) {
+  if (value is String) {
+    final trimmed = value.trim();
+    if (trimmed.isNotEmpty) return trimmed;
+  }
+  return null;
 }
 
 String _color(Object? value, String fallback) {

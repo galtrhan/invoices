@@ -9,7 +9,9 @@ import 'package:flutter/services.dart';
 import 'package:invoices/data/app_database.dart';
 import 'package:invoices/data/invoice_number_format.dart';
 import 'package:invoices/data/media_store.dart';
+import 'package:invoices/data/system_font_catalog.dart';
 import 'package:invoices/features/invoices/invoice_pdf.dart';
+import 'package:invoices/features/invoices/invoice_pdf_fonts.dart';
 import 'package:invoices/features/invoices/invoice_pdf_preview_page.dart';
 import 'package:invoices/l10n/localization_catalog.dart';
 import 'package:invoices/l10n/localization_definition.dart';
@@ -27,20 +29,6 @@ String _formatDate(DateTime date) {
 
 String _formatMoney(double value) => value.toStringAsFixed(2);
 
-ByteData? _cachedInvoicePdfFontRegular;
-ByteData? _cachedInvoicePdfFontBold;
-
-Future<({ByteData regular, ByteData bold})> _loadInvoicePdfFonts() async {
-  _cachedInvoicePdfFontRegular ??=
-      await rootBundle.load('assets/fonts/DejaVuSans.ttf');
-  _cachedInvoicePdfFontBold ??=
-      await rootBundle.load('assets/fonts/DejaVuSans-Bold.ttf');
-  return (
-    regular: _cachedInvoicePdfFontRegular!,
-    bold: _cachedInvoicePdfFontBold!,
-  );
-}
-
 /// Returns null when [raw] is not empty and not a number.
 double? _tryParseAmount(String raw) {
   final normalized = raw.trim().replaceAll(',', '.');
@@ -57,12 +45,16 @@ class InvoicesPage extends StatefulWidget {
     required this.localizations,
     required this.templates,
     required this.pdfTemplate,
+    this.pdfFont,
+    required this.systemFonts,
   });
 
   final AppDatabase database;
   final LocalizationCatalog localizations;
   final InvoiceTemplateCatalog templates;
   final String pdfTemplate;
+  final String? pdfFont;
+  final SystemFontCatalog systemFonts;
 
   @override
   State<InvoicesPage> createState() => _InvoicesPageState();
@@ -138,6 +130,8 @@ class _InvoicesPageState extends State<InvoicesPage> {
                       localizations: widget.localizations,
                       templates: widget.templates,
                       pdfTemplate: widget.pdfTemplate,
+                      pdfFont: widget.pdfFont,
+                      systemFonts: widget.systemFonts,
                       invoice: null,
                       onSaved: _select,
                     ),
@@ -147,6 +141,8 @@ class _InvoicesPageState extends State<InvoicesPage> {
                       localizations: widget.localizations,
                       templates: widget.templates,
                       pdfTemplate: widget.pdfTemplate,
+                      pdfFont: widget.pdfFont,
+                      systemFonts: widget.systemFonts,
                       invoice: selected,
                       onSaved: _select,
                       onDeleted: () =>
@@ -290,6 +286,8 @@ class _InvoiceEditor extends StatefulWidget {
     required this.localizations,
     required this.templates,
     required this.pdfTemplate,
+    this.pdfFont,
+    required this.systemFonts,
     required this.invoice,
     required this.onSaved,
     this.onDeleted,
@@ -299,6 +297,8 @@ class _InvoiceEditor extends StatefulWidget {
   final LocalizationCatalog localizations;
   final InvoiceTemplateCatalog templates;
   final String pdfTemplate;
+  final String? pdfFont;
+  final SystemFontCatalog systemFonts;
   final Invoice? invoice;
   final ValueChanged<Invoice> onSaved;
   final VoidCallback? onDeleted;
@@ -684,9 +684,13 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
       final number =
           _number.text.trim().isEmpty ? invoice.number : _number.text.trim();
       final clientName = invoice.clientName;
+      final preferredFont = widget.systemFonts.resolvePreferred(
+        templateFont: template.font,
+        settingsFont: widget.pdfFont,
+      );
       final logoAndFonts = await (
         _readLogoBytes(invoice.companyLogoPath),
-        _loadInvoicePdfFonts(),
+        InvoicePdfFonts.load(preferredFamily: preferredFont),
       ).wait;
       final logoBytes = logoAndFonts.$1;
       final fonts = logoAndFonts.$2;

@@ -4,6 +4,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:invoices/app_info.dart';
 import 'package:invoices/config/app_config.dart';
 import 'package:invoices/data/app_database.dart';
+import 'package:invoices/data/system_font_catalog.dart';
 import 'package:invoices/l10n/localization_catalog.dart';
 import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/pdf/invoice_template_catalog.dart';
@@ -18,21 +19,25 @@ Future<void> main() async {
     ThemeCatalog.load(AppConfig.themesDirectory),
     LocalizationCatalog.load(AppConfig.localizationsDirectory),
     InvoiceTemplateCatalog.load(AppConfig.templatesDirectory),
+    SystemFontCatalog.load(),
     AppConfig.load(),
   ).wait;
   final themes = results.$1;
   final localizations = results.$2;
   final templates = results.$3;
-  final loaded = results.$4;
+  final systemFonts = results.$4;
+  final loaded = results.$5;
   final database = AppDatabase();
 
   final resolvedTheme = themes.resolve(loaded.colorTheme).name;
   final resolvedLocale = localizations.resolve(loaded.localization).name;
   final resolvedTemplate = templates.resolve(loaded.pdfTemplate).name;
+  final resolvedPdfFont = systemFonts.resolveName(loaded.pdfFont);
   final config = loaded.copyWith(
     colorTheme: resolvedTheme,
     localization: resolvedLocale,
     pdfTemplate: resolvedTemplate,
+    pdfFont: resolvedPdfFont,
   );
 
   const windowOptions = WindowOptions(
@@ -55,6 +60,7 @@ Future<void> main() async {
       themes: themes,
       localizations: localizations,
       templates: templates,
+      systemFonts: systemFonts,
       database: database,
     ),
   );
@@ -67,6 +73,7 @@ class InvoicesApp extends StatefulWidget {
     required this.themes,
     required this.localizations,
     required this.templates,
+    required this.systemFonts,
     required this.database,
   });
 
@@ -74,6 +81,7 @@ class InvoicesApp extends StatefulWidget {
   final ThemeCatalog themes;
   final LocalizationCatalog localizations;
   final InvoiceTemplateCatalog templates;
+  final SystemFontCatalog systemFonts;
   final AppDatabase database;
 
   @override
@@ -122,6 +130,7 @@ class _InvoicesAppState extends State<InvoicesApp> {
           themes: widget.themes,
           localizations: widget.localizations,
           templates: widget.templates,
+          systemFonts: widget.systemFonts,
           database: widget.database,
           onThemeChanged: (theme) => _persist(_config.copyWith(theme: theme)),
           onColorThemeChanged: (colorTheme) =>
@@ -130,6 +139,8 @@ class _InvoicesAppState extends State<InvoicesApp> {
               _persist(_config.copyWith(localization: localization)),
           onPdfTemplateChanged: (pdfTemplate) =>
               _persist(_config.copyWith(pdfTemplate: pdfTemplate)),
+          onPdfFontChanged: (pdfFont) =>
+              _persist(_config.copyWith(pdfFont: pdfFont)),
           onRestoreSettings: () => _persist(AppConfig.defaults),
         ),
       ),

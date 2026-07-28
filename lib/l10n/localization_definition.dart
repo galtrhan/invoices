@@ -36,6 +36,8 @@ class LocalizationDefinition {
   String get settingsDark => _('settings_dark');
   String get settingsLanguage => _('settings_language');
   String get settingsPdfTemplate => _('settings_pdf_template');
+  String get settingsPdfFont => _('settings_pdf_font');
+  String get settingsPdfFontAuto => _('settings_pdf_font_auto');
   String get settingsData => _('settings_data');
   String get settingsResetBody => _('settings_reset_body');
   String get settingsResetButton => _('settings_reset_button');
@@ -316,6 +318,8 @@ class LocalizationDefinition {
       'settings_dark': 'Dark',
       'settings_language': 'Language',
       'settings_pdf_template': 'PDF template',
+      'settings_pdf_font': 'PDF font',
+      'settings_pdf_font_auto': 'Automatic',
       'settings_data': 'Data',
       'settings_reset_body':
           'Delete invoices, clients, company details, and logos. '

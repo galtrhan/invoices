@@ -10,12 +10,15 @@ import 'package:invoices/theme/theme_definition.dart';
 enum AppThemePreference { light, dark }
 
 class AppConfig {
+  static const _copyWithUnset = Object();
+
   const AppConfig({
     this.windowDecorations = true,
     this.theme = AppThemePreference.light,
     this.colorTheme = ThemeDefinition.defaultName,
     this.localization = LocalizationDefinition.defaultName,
     this.pdfTemplate = InvoiceTemplateDefinition.defaultName,
+    this.pdfFont,
   });
 
   final bool windowDecorations;
@@ -29,6 +32,9 @@ class AppConfig {
 
   /// PDF template `name` from JSON (or Default).
   final String pdfTemplate;
+
+  /// PDF font family name selected by the user (null = automatic).
+  final String? pdfFont;
 
   static const AppConfig defaults = AppConfig();
 
@@ -84,6 +90,7 @@ class AppConfig {
     String? colorTheme,
     String? localization,
     String? pdfTemplate,
+    Object? pdfFont = _copyWithUnset,
   }) {
     return AppConfig(
       windowDecorations: windowDecorations ?? this.windowDecorations,
@@ -91,6 +98,9 @@ class AppConfig {
       colorTheme: colorTheme ?? this.colorTheme,
       localization: localization ?? this.localization,
       pdfTemplate: pdfTemplate ?? this.pdfTemplate,
+      pdfFont: identical(pdfFont, _copyWithUnset)
+          ? this.pdfFont
+          : pdfFont as String?,
     );
   }
 
@@ -100,6 +110,7 @@ class AppConfig {
         'color_theme': colorTheme,
         'localization': localization,
         'pdf_template': pdfTemplate,
+        'pdf_font': ?pdfFont,
       };
 
   /// Accepts display names or legacy slugs (`tokyo_night` → `tokyo night`).
@@ -118,6 +129,14 @@ class AppConfig {
 
   static String pdfTemplateFromJson(Object? value) =>
       namedPreferenceFromJson(value, InvoiceTemplateDefinition.defaultName);
+
+  static String? optionalStringFromJson(Object? value) {
+    if (value is! String) {
+      return null;
+    }
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
 
   static Future<AppConfig> load() async {
     final file = File(configPath);
@@ -140,6 +159,7 @@ class AppConfig {
         colorTheme: colorThemeFromJson(decoded['color_theme']),
         localization: localizationFromJson(decoded['localization']),
         pdfTemplate: pdfTemplateFromJson(decoded['pdf_template']),
+        pdfFont: optionalStringFromJson(decoded['pdf_font']),
       );
     } on FormatException {
       return defaults;

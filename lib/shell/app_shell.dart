@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:invoices/config/app_config.dart';
 import 'package:invoices/data/app_database.dart';
+import 'package:invoices/data/system_font_catalog.dart';
 import 'package:invoices/features/clients/clients_page.dart';
 import 'package:invoices/features/company/company_page.dart';
 import 'package:invoices/features/invoices/invoices_page.dart';
@@ -18,11 +19,13 @@ class AppShell extends StatefulWidget {
     required this.themes,
     required this.localizations,
     required this.templates,
+    required this.systemFonts,
     required this.database,
     required this.onThemeChanged,
     required this.onColorThemeChanged,
     required this.onLocalizationChanged,
     required this.onPdfTemplateChanged,
+    required this.onPdfFontChanged,
     required this.onRestoreSettings,
   });
 
@@ -30,11 +33,13 @@ class AppShell extends StatefulWidget {
   final ThemeCatalog themes;
   final LocalizationCatalog localizations;
   final InvoiceTemplateCatalog templates;
+  final SystemFontCatalog systemFonts;
   final AppDatabase database;
   final ValueChanged<AppThemePreference> onThemeChanged;
   final ValueChanged<String> onColorThemeChanged;
   final ValueChanged<String> onLocalizationChanged;
   final ValueChanged<String> onPdfTemplateChanged;
+  final ValueChanged<String?> onPdfFontChanged;
   final Future<void> Function() onRestoreSettings;
 
   @override
@@ -70,6 +75,8 @@ class _AppShellState extends State<AppShell> {
           localizations: widget.localizations,
           templates: widget.templates,
           pdfTemplate: widget.config.pdfTemplate,
+          pdfFont: widget.config.pdfFont,
+          systemFonts: widget.systemFonts,
         ),
       AppSection.clients => ClientsPage(
           database: widget.database,
@@ -82,6 +89,8 @@ class _AppShellState extends State<AppShell> {
           colorTheme: widget.config.colorTheme,
           localization: widget.config.localization,
           pdfTemplate: widget.config.pdfTemplate,
+          pdfFont: widget.config.pdfFont,
+          systemFonts: widget.systemFonts,
           themes: widget.themes,
           localizations: widget.localizations,
           templates: widget.templates,
@@ -89,6 +98,7 @@ class _AppShellState extends State<AppShell> {
           onColorThemeChanged: widget.onColorThemeChanged,
           onLocalizationChanged: widget.onLocalizationChanged,
           onPdfTemplateChanged: widget.onPdfTemplateChanged,
+          onPdfFontChanged: widget.onPdfFontChanged,
           onRestoreSettings: widget.onRestoreSettings,
         ),
     };

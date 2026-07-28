@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:invoices/app_info.dart';
 import 'package:invoices/config/app_config.dart';
 import 'package:invoices/data/app_database.dart';
+import 'package:invoices/data/system_font_catalog.dart';
 import 'package:invoices/l10n/localization_catalog.dart';
 import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/main.dart';
@@ -25,6 +26,7 @@ void main() {
         templates: InvoiceTemplateCatalog([
           InvoiceTemplateDefinition.builtinDefault,
         ]),
+        systemFonts: SystemFontCatalog(const []),
         database: database,
       ),
     );
