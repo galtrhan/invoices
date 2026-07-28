@@ -186,6 +186,7 @@ class _ClientList extends StatelessWidget {
         return ListTile(
           selected: client.id == selectedId,
           selectedTileColor: Theme.of(context).colorScheme.primaryContainer,
+          leading: StoredLogoThumbnail(storedPath: client.logoPath),
           title: Text(
             client.name.isEmpty ? l10n.clientsEditorNew : client.name,
           ),
@@ -482,14 +483,13 @@ class _ClientEditorState extends State<_ClientEditor> {
             maxLines: 3,
           ),
           const SizedBox(height: 16),
-          DropdownMenu<String?>(
-            key: ValueKey('client-pdf-template-$_pdfTemplate'),
+          SettingsDropdownMenu<String?>.onSelected(
+            valueKey: 'client-pdf-template-$_pdfTemplate',
             initialSelection: _pdfTemplate,
             label: Text(l10n.clientsFieldPdfTemplate),
-            expandedInsets: .zero,
             enabled: !busy,
             onSelected: (value) => setState(() => _pdfTemplate = value),
-            dropdownMenuEntries: [
+            entries: [
               DropdownMenuEntry(
                 value: null,
                 label: l10n.clientsPdfTemplateDefault,

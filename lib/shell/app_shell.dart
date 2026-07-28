@@ -26,6 +26,7 @@ class AppShell extends StatefulWidget {
     required this.onLocalizationChanged,
     required this.onPdfTemplateChanged,
     required this.onPdfFontChanged,
+    required this.onCurrencyChanged,
     required this.onRestoreSettings,
   });
 
@@ -40,6 +41,7 @@ class AppShell extends StatefulWidget {
   final ValueChanged<String> onLocalizationChanged;
   final ValueChanged<String> onPdfTemplateChanged;
   final ValueChanged<String?> onPdfFontChanged;
+  final ValueChanged<String> onCurrencyChanged;
   final Future<void> Function() onRestoreSettings;
 
   @override
@@ -76,6 +78,7 @@ class _AppShellState extends State<AppShell> {
           templates: widget.templates,
           pdfTemplate: widget.config.pdfTemplate,
           pdfFont: widget.config.pdfFont,
+          currency: widget.config.currency,
           systemFonts: widget.systemFonts,
         ),
       AppSection.clients => ClientsPage(
@@ -90,6 +93,7 @@ class _AppShellState extends State<AppShell> {
           localization: widget.config.localization,
           pdfTemplate: widget.config.pdfTemplate,
           pdfFont: widget.config.pdfFont,
+          currency: widget.config.currency,
           systemFonts: widget.systemFonts,
           themes: widget.themes,
           localizations: widget.localizations,
@@ -99,6 +103,7 @@ class _AppShellState extends State<AppShell> {
           onLocalizationChanged: widget.onLocalizationChanged,
           onPdfTemplateChanged: widget.onPdfTemplateChanged,
           onPdfFontChanged: widget.onPdfFontChanged,
+          onCurrencyChanged: widget.onCurrencyChanged,
           onRestoreSettings: widget.onRestoreSettings,
         ),
     };

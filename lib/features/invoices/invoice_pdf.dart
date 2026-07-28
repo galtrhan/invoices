@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import 'package:invoices/config/currency.dart';
 import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/pdf/invoice_template_definition.dart';
 
@@ -102,6 +103,7 @@ class InvoicePdfData {
     required this.labels,
     required this.fontRegular,
     required this.fontBold,
+    required this.currency,
     this.logoBytes,
     this.template = InvoiceTemplateDefinition.builtinDefault,
   });
@@ -124,6 +126,7 @@ class InvoicePdfData {
   final List<InvoicePdfLine> lines;
   final InvoicePdfLabels labels;
   final InvoiceTemplateDefinition template;
+  final Currency currency;
 
   double get total =>
       lines.fold<double>(0, (sum, line) => sum + line.total);
@@ -233,7 +236,7 @@ Future<Uint8List> buildInvoicePdf(InvoicePdfData data) async {
                         align: pw.TextAlign.center,
                       ),
                       _bodyCell(
-                        _pdfFormatMoney(line.total),
+                        data.currency.formatPdf(line.total),
                         align: pw.TextAlign.right,
                       ),
                     ],
@@ -256,7 +259,7 @@ Future<Uint8List> buildInvoicePdf(InvoicePdfData data) async {
                     _bodyCell(''),
                     _bodyCell(''),
                     _bodyCell(
-                      _pdfFormatMoney(total),
+                      data.currency.formatPdf(total),
                       align: pw.TextAlign.right,
                       bold: true,
                     ),
@@ -269,7 +272,7 @@ Future<Uint8List> buildInvoicePdf(InvoicePdfData data) async {
                     _bodyCell(''),
                     _bodyCell(''),
                     _bodyCell(
-                      _pdfFormatMoney(total),
+                      data.currency.formatPdf(total),
                       align: pw.TextAlign.right,
                       bold: true,
                     ),
@@ -414,11 +417,6 @@ String _pdfFormatDate(DateTime date) {
   final d = date.day.toString().padLeft(2, '0');
   final m = date.month.toString().padLeft(2, '0');
   return '$d.$m.${date.year}';
-}
-
-String _pdfFormatMoney(double value) {
-  final fixed = value.toStringAsFixed(2).replaceAll('.', ',');
-  return '€ $fixed';
 }
 
 String _pdfFormatQuantity(double value) {

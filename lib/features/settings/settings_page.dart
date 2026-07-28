@@ -4,6 +4,7 @@ import 'package:invoices/config/app_config.dart';
 import 'package:invoices/data/app_database.dart';
 import 'package:invoices/data/media_store.dart';
 import 'package:invoices/data/system_font_catalog.dart';
+import 'package:invoices/config/currency.dart';
 import 'package:invoices/l10n/localization_catalog.dart';
 import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/pdf/invoice_template_catalog.dart';
@@ -19,6 +20,7 @@ class SettingsPage extends StatelessWidget {
     required this.localization,
     required this.pdfTemplate,
     required this.pdfFont,
+    required this.currency,
     required this.systemFonts,
     required this.themes,
     required this.localizations,
@@ -28,6 +30,7 @@ class SettingsPage extends StatelessWidget {
     required this.onLocalizationChanged,
     required this.onPdfTemplateChanged,
     required this.onPdfFontChanged,
+    required this.onCurrencyChanged,
     required this.onRestoreSettings,
   });
 
@@ -37,6 +40,7 @@ class SettingsPage extends StatelessWidget {
   final String localization;
   final String pdfTemplate;
   final String? pdfFont;
+  final String currency;
   final SystemFontCatalog systemFonts;
   final ThemeCatalog themes;
   final LocalizationCatalog localizations;
@@ -46,6 +50,7 @@ class SettingsPage extends StatelessWidget {
   final ValueChanged<String> onLocalizationChanged;
   final ValueChanged<String> onPdfTemplateChanged;
   final ValueChanged<String?> onPdfFontChanged;
+  final ValueChanged<String> onCurrencyChanged;
   final Future<void> Function() onRestoreSettings;
 
   Future<void> _runConfirmed({
@@ -158,17 +163,12 @@ class SettingsPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: .start,
                       children: [
-                        DropdownMenu<String>(
-                          key: ValueKey('theme-$colorTheme'),
+                        SettingsDropdownMenu.onChanged(
+                          valueKey: 'theme-$colorTheme',
                           initialSelection: colorTheme,
                           label: Text(l10n.settingsTheme),
-                          expandedInsets: .zero,
-                          onSelected: (value) {
-                            if (value != null) {
-                              onColorThemeChanged(value);
-                            }
-                          },
-                          dropdownMenuEntries: [
+                          onChanged: onColorThemeChanged,
+                          entries: [
                             for (final option in themes.themes)
                               DropdownMenuEntry(
                                 value: option.name,
@@ -208,23 +208,37 @@ class SettingsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   SectionPanel(
-                    title: l10n.settingsLanguage,
-                    child: DropdownMenu<String>(
-                      key: ValueKey('locale-$localization'),
-                      initialSelection: localization,
-                      label: Text(l10n.settingsLanguage),
-                      expandedInsets: .zero,
-                      onSelected: (value) {
-                        if (value != null) {
-                          onLocalizationChanged(value);
-                        }
-                      },
-                      dropdownMenuEntries: [
-                        for (final option in localizations.localizations)
-                          DropdownMenuEntry(
-                            value: option.name,
-                            label: option.name,
-                          ),
+                    title: l10n.settingsGeneral,
+                    child: Column(
+                      crossAxisAlignment: .stretch,
+                      children: [
+                        SettingsDropdownMenu.onChanged(
+                          valueKey: 'locale-$localization',
+                          initialSelection: localization,
+                          label: Text(l10n.settingsLanguage),
+                          onChanged: onLocalizationChanged,
+                          entries: [
+                            for (final option in localizations.localizations)
+                              DropdownMenuEntry(
+                                value: option.name,
+                                label: option.name,
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        SettingsDropdownMenu.onChanged(
+                          valueKey: 'currency-$currency',
+                          initialSelection: currency,
+                          label: Text(l10n.settingsCurrency),
+                          onChanged: onCurrencyChanged,
+                          entries: [
+                            for (final c in Currency.supported)
+                              DropdownMenuEntry(
+                                value: c.code,
+                                label: c.settingsLabel,
+                              ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -234,17 +248,12 @@ class SettingsPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: .stretch,
                       children: [
-                        DropdownMenu<String>(
-                          key: ValueKey('pdf-template-$pdfTemplate'),
+                        SettingsDropdownMenu.onChanged(
+                          valueKey: 'pdf-template-$pdfTemplate',
                           initialSelection: pdfTemplate,
                           label: Text(l10n.settingsPdfTemplate),
-                          expandedInsets: .zero,
-                          onSelected: (value) {
-                            if (value != null) {
-                              onPdfTemplateChanged(value);
-                            }
-                          },
-                          dropdownMenuEntries: [
+                          onChanged: onPdfTemplateChanged,
+                          entries: [
                             for (final option in templates.templates)
                               DropdownMenuEntry(
                                 value: option.name,
@@ -253,13 +262,12 @@ class SettingsPage extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        DropdownMenu<String?>(
-                          key: ValueKey('pdf-font-$pdfFont'),
+                        SettingsDropdownMenu<String?>.onSelected(
+                          valueKey: 'pdf-font-$pdfFont',
                           initialSelection: pdfFont,
                           label: Text(l10n.settingsPdfFont),
-                          expandedInsets: .zero,
                           onSelected: onPdfFontChanged,
-                          dropdownMenuEntries: [
+                          entries: [
                             DropdownMenuEntry(
                               value: null,
                               label: l10n.settingsPdfFontAuto,

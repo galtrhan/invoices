@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import 'package:invoices/data/media_store.dart';
+
 ButtonStyle destructiveFilledStyle(ColorScheme scheme) {
   return FilledButton.styleFrom(
     backgroundColor: scheme.error,
@@ -135,6 +137,113 @@ class SectionPanel extends StatelessWidget {
   }
 }
 
+class SettingsDropdownMenu<T> extends StatelessWidget {
+  const SettingsDropdownMenu({
+    super.key,
+    required this.valueKey,
+    required this.initialSelection,
+    required this.label,
+    required this.entries,
+    required this.onSelected,
+    this.enabled = true,
+  });
+
+  factory SettingsDropdownMenu.onChanged({
+    Key? key,
+    required String valueKey,
+    required T initialSelection,
+    required Widget label,
+    required List<DropdownMenuEntry<T>> entries,
+    required ValueChanged<T> onChanged,
+    bool enabled = true,
+  }) {
+    return SettingsDropdownMenu<T>(
+      key: key,
+      valueKey: valueKey,
+      initialSelection: initialSelection,
+      label: label,
+      entries: entries,
+      enabled: enabled,
+      onSelected: (value) {
+        if (value != null) {
+          onChanged(value);
+        }
+      },
+    );
+  }
+
+  factory SettingsDropdownMenu.onSelected({
+    Key? key,
+    required String valueKey,
+    required T? initialSelection,
+    required Widget label,
+    required List<DropdownMenuEntry<T>> entries,
+    required ValueChanged<T?> onSelected,
+    bool enabled = true,
+  }) {
+    return SettingsDropdownMenu<T>(
+      key: key,
+      valueKey: valueKey,
+      initialSelection: initialSelection,
+      label: label,
+      entries: entries,
+      enabled: enabled,
+      onSelected: onSelected,
+    );
+  }
+
+  final String valueKey;
+  final T? initialSelection;
+  final Widget label;
+  final List<DropdownMenuEntry<T>> entries;
+  final ValueChanged<T?> onSelected;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownMenu<T>(
+      key: ValueKey(valueKey),
+      initialSelection: initialSelection,
+      label: label,
+      expandedInsets: .zero,
+      enabled: enabled,
+      onSelected: onSelected,
+      dropdownMenuEntries: entries,
+    );
+  }
+}
+
+class _CachedFileImage extends StatelessWidget {
+  const _CachedFileImage({
+    required this.filePath,
+    required this.size,
+    required this.icon,
+    this.iconColor,
+  });
+
+  final String filePath;
+  final double size;
+  final IconData icon;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final cacheSize =
+        (size * MediaQuery.devicePixelRatioOf(context)).round();
+    return Image.file(
+      File(filePath),
+      key: ValueKey(filePath),
+      width: size,
+      height: size,
+      cacheWidth: cacheSize,
+      fit: BoxFit.cover,
+      gaplessPlayback: true,
+      errorBuilder: (context, error, stackTrace) =>
+          Icon(icon, color: iconColor),
+    );
+  }
+}
+
 class LogoUploadTile extends StatelessWidget {
   const LogoUploadTile({
     super.key,
@@ -187,15 +296,11 @@ class LogoUploadTile extends StatelessWidget {
                 border: Border.all(color: theme.dividerColor),
               ),
               child: hasImage
-                  ? Image.file(
-                      File(resolvedImage),
-                      width: size,
-                      height: size,
-                      cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
-                          .round(),
-                      fit: .cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Icon(icon, color: muted),
+                  ? _CachedFileImage(
+                      filePath: resolvedImage,
+                      size: size,
+                      icon: icon,
+                      iconColor: muted,
                     )
                   : Icon(icon, color: muted),
             ),
@@ -218,6 +323,37 @@ class LogoUploadTile extends StatelessWidget {
               OutlinedButton(onPressed: onUpload, child: Text(uploadLabel!)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// List-tile leading thumbnail for a stored media path.
+class StoredLogoThumbnail extends StatelessWidget {
+  const StoredLogoThumbnail({
+    super.key,
+    this.storedPath,
+    this.size = 40,
+    this.icon = Icons.image_outlined,
+  });
+
+  final String? storedPath;
+  final double size;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = storedPath;
+    if (path == null || path.isEmpty) {
+      return Icon(icon);
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: _CachedFileImage(
+        filePath: MediaStore.absolutePath(path),
+        size: size,
+        icon: icon,
       ),
     );
   }

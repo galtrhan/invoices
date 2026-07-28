@@ -13,6 +13,7 @@ import 'package:invoices/data/system_font_catalog.dart';
 import 'package:invoices/features/invoices/invoice_pdf.dart';
 import 'package:invoices/features/invoices/invoice_pdf_fonts.dart';
 import 'package:invoices/features/invoices/invoice_pdf_preview_page.dart';
+import 'package:invoices/config/currency.dart';
 import 'package:invoices/l10n/localization_catalog.dart';
 import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/pdf/invoice_template_catalog.dart';
@@ -26,8 +27,6 @@ String _formatDate(DateTime date) {
   final d = date.day.toString().padLeft(2, '0');
   return '$y.$m.$d';
 }
-
-String _formatMoney(double value) => value.toStringAsFixed(2);
 
 /// Returns null when [raw] is not empty and not a number.
 double? _tryParseAmount(String raw) {
@@ -46,6 +45,7 @@ class InvoicesPage extends StatefulWidget {
     required this.templates,
     required this.pdfTemplate,
     this.pdfFont,
+    required this.currency,
     required this.systemFonts,
   });
 
@@ -54,6 +54,7 @@ class InvoicesPage extends StatefulWidget {
   final InvoiceTemplateCatalog templates;
   final String pdfTemplate;
   final String? pdfFont;
+  final String currency;
   final SystemFontCatalog systemFonts;
 
   @override
@@ -116,12 +117,15 @@ class _InvoicesPageState extends State<InvoicesPage> {
                   ? null
                   : invoices.where((row) => row.id == selectedId).firstOrNull;
 
+              final currency = Currency.fromCode(widget.currency);
+
               return MasterDetail(
                 master: _InvoiceList(
                   invoices: invoices,
                   selectedId: selectedId,
                   onSelect: _select,
                   onCreate: _startCreate,
+                  currency: currency,
                 ),
                 detail: switch (_detail) {
                   _Create() => _InvoiceEditor(
@@ -131,6 +135,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
                       templates: widget.templates,
                       pdfTemplate: widget.pdfTemplate,
                       pdfFont: widget.pdfFont,
+                      currency: currency,
                       systemFonts: widget.systemFonts,
                       invoice: null,
                       onSaved: _select,
@@ -142,6 +147,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
                       templates: widget.templates,
                       pdfTemplate: widget.pdfTemplate,
                       pdfFont: widget.pdfFont,
+                      currency: currency,
                       systemFonts: widget.systemFonts,
                       invoice: selected,
                       onSaved: _select,
@@ -193,12 +199,14 @@ class _InvoiceList extends StatelessWidget {
     required this.selectedId,
     required this.onSelect,
     required this.onCreate,
+    required this.currency,
   });
 
   final List<Invoice> invoices;
   final int? selectedId;
   final ValueChanged<Invoice> onSelect;
   final VoidCallback onCreate;
+  final Currency currency;
 
   @override
   Widget build(BuildContext context) {
@@ -224,10 +232,11 @@ class _InvoiceList extends StatelessWidget {
         return ListTile(
           selected: invoice.id == selectedId,
           selectedTileColor: Theme.of(context).colorScheme.primaryContainer,
+          leading: StoredLogoThumbnail(storedPath: invoice.clientLogoPath),
           title: Text(invoice.number),
           subtitle: Text('$clientLabel · ${_formatDate(invoice.issuedOn)}'),
           trailing: Text(
-            _formatMoney(invoice.total),
+            currency.formatUi(invoice.total),
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           onTap: () => onSelect(invoice),
@@ -287,6 +296,7 @@ class _InvoiceEditor extends StatefulWidget {
     required this.templates,
     required this.pdfTemplate,
     this.pdfFont,
+    required this.currency,
     required this.systemFonts,
     required this.invoice,
     required this.onSaved,
@@ -298,6 +308,7 @@ class _InvoiceEditor extends StatefulWidget {
   final InvoiceTemplateCatalog templates;
   final String pdfTemplate;
   final String? pdfFont;
+  final Currency currency;
   final SystemFontCatalog systemFonts;
   final Invoice? invoice;
   final ValueChanged<Invoice> onSaved;
@@ -373,8 +384,8 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
         lines.map(
           (line) => _JobLineDraft(
             description: line.description,
-            quantity: _formatMoney(line.quantity),
-            unitPrice: _formatMoney(line.unitPrice),
+            quantity: line.quantity.toStringAsFixed(2),
+            unitPrice: line.unitPrice.toStringAsFixed(2),
           ),
         ),
       );
@@ -717,6 +728,7 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
           lines: lineInputs,
           labels: InvoicePdfLabels.fromLocalization(exportL10n),
           template: template,
+          currency: widget.currency,
         ),
       );
 
@@ -900,7 +912,7 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
                 Text(l10n.invoicesSectionJobsBody),
                 const SizedBox(height: 12),
                 for (var i = 0; i < _lines.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 12),
+                  if (i > 0) const Divider(height: 24),
                   _JobLineRow(
                     line: _lines[i],
                     canRemove: _lines.length > 1 && !busy,
@@ -922,7 +934,7 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
                 Align(
                   alignment: .centerRight,
                   child: Text(
-                    '${l10n.invoicesFieldTotal}: ${_formatMoney(_total)}',
+                    '${l10n.invoicesFieldTotal}: ${widget.currency.formatUi(_total)}',
                     style: textTheme.titleMedium,
                   ),
                 ),
@@ -1081,17 +1093,12 @@ class _ExportPdfDialogState extends State<_ExportPdfDialog> {
         child: Column(
           mainAxisSize: .min,
           children: [
-            DropdownMenu<String>(
-              key: ValueKey('export-language-$_language'),
+            SettingsDropdownMenu.onChanged(
+              valueKey: 'export-language-$_language',
               initialSelection: _language,
               label: Text(l10n.invoicesExportLanguage),
-              expandedInsets: .zero,
-              onSelected: (value) {
-                if (value != null) {
-                  setState(() => _language = value);
-                }
-              },
-              dropdownMenuEntries: [
+              onChanged: (value) => setState(() => _language = value),
+              entries: [
                 for (final option in widget.localizations.localizations)
                   DropdownMenuEntry(
                     value: option.name,
@@ -1100,17 +1107,12 @@ class _ExportPdfDialogState extends State<_ExportPdfDialog> {
               ],
             ),
             const SizedBox(height: 16),
-            DropdownMenu<String>(
-              key: ValueKey('export-template-$_template'),
+            SettingsDropdownMenu.onChanged(
+              valueKey: 'export-template-$_template',
               initialSelection: _template,
               label: Text(l10n.invoicesExportTemplate),
-              expandedInsets: .zero,
-              onSelected: (value) {
-                if (value != null) {
-                  setState(() => _template = value);
-                }
-              },
-              dropdownMenuEntries: [
+              onChanged: (value) => setState(() => _template = value),
+              entries: [
                 for (final option in widget.templates.templates)
                   DropdownMenuEntry(
                     value: option.name,

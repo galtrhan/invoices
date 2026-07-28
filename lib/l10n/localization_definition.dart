@@ -34,11 +34,13 @@ class LocalizationDefinition {
   String get settingsMode => _('settings_mode');
   String get settingsLight => _('settings_light');
   String get settingsDark => _('settings_dark');
+  String get settingsGeneral => _('settings_general');
   String get settingsLanguage => _('settings_language');
   String get settingsPdf => _('settings_pdf');
   String get settingsPdfTemplate => _('settings_pdf_template');
   String get settingsPdfFont => _('settings_pdf_font');
   String get settingsPdfFontAuto => _('settings_pdf_font_auto');
+  String get settingsCurrency => _('settings_currency');
   String get settingsData => _('settings_data');
   String get settingsResetBody => _('settings_reset_body');
   String get settingsResetButton => _('settings_reset_button');
@@ -317,11 +319,13 @@ class LocalizationDefinition {
       'settings_mode': 'Mode',
       'settings_light': 'Light',
       'settings_dark': 'Dark',
+      'settings_general': 'General',
       'settings_language': 'Language',
       'settings_pdf': 'PDF',
       'settings_pdf_template': 'PDF template',
       'settings_pdf_font': 'PDF font',
       'settings_pdf_font_auto': 'Automatic',
+      'settings_currency': 'Currency',
       'settings_data': 'Data',
       'settings_reset_body':
           'Delete invoices, clients, company details, and logos. '

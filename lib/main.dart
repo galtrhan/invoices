@@ -141,6 +141,8 @@ class _InvoicesAppState extends State<InvoicesApp> {
               _persist(_config.copyWith(pdfTemplate: pdfTemplate)),
           onPdfFontChanged: (pdfFont) =>
               _persist(_config.copyWith(pdfFont: pdfFont)),
+          onCurrencyChanged: (currency) =>
+              _persist(_config.copyWith(currency: currency)),
           onRestoreSettings: () => _persist(AppConfig.defaults),
         ),
       ),

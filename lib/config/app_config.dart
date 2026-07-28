@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import 'package:invoices/config/named_json_catalog.dart';
+import 'package:invoices/config/currency.dart';
 import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/pdf/invoice_template_definition.dart';
 import 'package:invoices/theme/theme_definition.dart';
@@ -20,6 +21,7 @@ class AppConfig {
     this.localization = LocalizationDefinition.defaultName,
     this.pdfTemplate = InvoiceTemplateDefinition.defaultName,
     this.pdfFont,
+    this.currency = Currency.defaultCode,
   });
 
   final bool windowDecorations;
@@ -36,6 +38,8 @@ class AppConfig {
 
   /// PDF font family name selected by the user (null = automatic).
   final String? pdfFont;
+
+  final String currency;
 
   static const AppConfig defaults = AppConfig();
 
@@ -92,6 +96,7 @@ class AppConfig {
     String? localization,
     String? pdfTemplate,
     Object? pdfFont = _copyWithUnset,
+    Object? currency = _copyWithUnset,
   }) {
     return AppConfig(
       windowDecorations: windowDecorations ?? this.windowDecorations,
@@ -102,6 +107,9 @@ class AppConfig {
       pdfFont: identical(pdfFont, _copyWithUnset)
           ? this.pdfFont
           : pdfFont as String?,
+      currency: identical(currency, _copyWithUnset)
+          ? this.currency
+          : currency as String,
     );
   }
 
@@ -112,6 +120,7 @@ class AppConfig {
         'localization': localization,
         'pdf_template': pdfTemplate,
         'pdf_font': ?pdfFont,
+        'currency': currency,
       };
 
   /// Accepts display names or legacy slugs (`tokyo_night` → `tokyo night`).
@@ -133,6 +142,10 @@ class AppConfig {
 
   static String? optionalStringFromJson(Object? value) =>
       optionalCatalogString(value);
+
+  static String currencyFromJson(Object? value) => Currency.fromCode(
+        value is String ? value : Currency.defaultCode,
+      ).code;
 
   static Future<AppConfig> load() async {
     final file = File(configPath);
@@ -156,6 +169,7 @@ class AppConfig {
         localization: localizationFromJson(decoded['localization']),
         pdfTemplate: pdfTemplateFromJson(decoded['pdf_template']),
         pdfFont: optionalStringFromJson(decoded['pdf_font']),
+        currency: currencyFromJson(decoded['currency']),
       );
     } on FormatException {
       return defaults;
