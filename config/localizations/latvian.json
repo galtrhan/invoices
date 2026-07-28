@@ -13,6 +13,27 @@
     "settings_light": "Gaišs",
     "settings_dark": "Tumšs",
     "settings_language": "Valoda",
+    "settings_data": "Dati",
+    "settings_reset_body":
+      "Dzēš klientus, uzņēmuma datus un logotipus. Tēma un valoda paliek nemainīgas.",
+    "settings_reset_button": "Dzēst visus datus",
+    "settings_reset_confirm_title": "Dzēst visus datus?",
+    "settings_reset_confirm_body":
+      "Tas noņem klientus, uzņēmuma datus un saglabātos logotipus. Šo darbību nevar atsaukt. Preferences paliek nemainīgas.",
+    "settings_reset_confirm_action": "Dzēst",
+    "settings_cancel": "Atcelt",
+    "settings_reset_done": "Lietotnes dati dzēsti",
+    "settings_reset_failed": "Neizdevās dzēst lietotnes datus",
+    "settings_preferences": "Noklusējumi",
+    "settings_restore_body":
+      "Atjauno iestatījumus uz noklusējuma vērtībām. Klientu un uzņēmuma dati paliek nemainīgi.",
+    "settings_restore_button": "Atjaunot noklusējuma iestatījumus",
+    "settings_restore_confirm_title": "Atjaunot noklusējuma iestatījumus?",
+    "settings_restore_confirm_body":
+      "Tas atjauno iestatījumus uz noklusējuma vērtībām. Klientu un uzņēmuma dati paliek nemainīgi.",
+    "settings_restore_confirm_action": "Atjaunot",
+    "settings_restore_done": "Iestatījumi atjaunoti uz noklusējumu",
+    "settings_restore_failed": "Neizdevās atjaunot iestatījumus",
     "invoices_title": "Rēķini",
     "invoices_subtitle": "Ģenerē rēķinus no klientiem, uzņēmuma un darba rindām",
     "invoices_new": "Jauns rēķins",

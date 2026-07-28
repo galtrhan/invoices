@@ -119,6 +119,7 @@ class _InvoicesAppState extends State<InvoicesApp> {
               _persist(_config.copyWith(colorTheme: colorTheme)),
           onLocalizationChanged: (localization) =>
               _persist(_config.copyWith(localization: localization)),
+          onRestoreSettings: () => _persist(AppConfig.defaults),
         ),
       ),
     );

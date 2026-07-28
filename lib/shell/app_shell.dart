@@ -20,6 +20,7 @@ class AppShell extends StatefulWidget {
     required this.onThemeChanged,
     required this.onColorThemeChanged,
     required this.onLocalizationChanged,
+    required this.onRestoreSettings,
   });
 
   final AppConfig config;
@@ -29,6 +30,7 @@ class AppShell extends StatefulWidget {
   final ValueChanged<AppThemePreference> onThemeChanged;
   final ValueChanged<String> onColorThemeChanged;
   final ValueChanged<String> onLocalizationChanged;
+  final Future<void> Function() onRestoreSettings;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -62,6 +64,7 @@ class _AppShellState extends State<AppShell> {
       AppSection.clients => ClientsPage(database: widget.database),
       AppSection.company => CompanyPage(database: widget.database),
       AppSection.settings => SettingsPage(
+          database: widget.database,
           theme: widget.config.theme,
           colorTheme: widget.config.colorTheme,
           localization: widget.config.localization,
@@ -70,6 +73,7 @@ class _AppShellState extends State<AppShell> {
           onThemeChanged: widget.onThemeChanged,
           onColorThemeChanged: widget.onColorThemeChanged,
           onLocalizationChanged: widget.onLocalizationChanged,
+          onRestoreSettings: widget.onRestoreSettings,
         ),
     };
   }

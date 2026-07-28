@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import 'package:invoices/app_info.dart';
 import 'package:invoices/data/app_database.dart';
 import 'package:invoices/data/media_store.dart';
 import 'package:invoices/l10n/localization_definition.dart';
@@ -44,10 +45,8 @@ class _SideNavState extends State<SideNav> {
     final l10n = AppLocalizations.of(context);
 
     final items = [
-      (AppSection.invoices, l10n.navInvoices, Icons.receipt_long_outlined),
       (AppSection.clients, l10n.navClients, Icons.people_outline),
-      (AppSection.company, l10n.navCompany, Icons.apartment_outlined),
-      (AppSection.settings, l10n.navSettings, Icons.settings_outlined),
+      (AppSection.invoices, l10n.navInvoices, Icons.receipt_long_outlined),
     ];
 
     return ColoredBox(
@@ -80,6 +79,27 @@ class _SideNavState extends State<SideNav> {
                 onTap: () => widget.onSectionSelected(item.$1),
               ),
             const Spacer(),
+            _NavItem(
+              label: l10n.navSettings,
+              icon: Icons.settings_outlined,
+              selected: widget.section == AppSection.settings,
+              selectedColor: scheme.primary,
+              selectedForeground: scheme.onPrimary,
+              hoverColor: chrome.sidebarHover,
+              onTap: () => widget.onSectionSelected(AppSection.settings),
+            ),
+            Padding(
+              padding: const .fromLTRB(10, 4, 10, 12),
+              child: Text(
+                AppInfo.version,
+                textAlign: .center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.45),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
           ],
         ),
       ),

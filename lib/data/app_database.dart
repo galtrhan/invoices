@@ -125,6 +125,13 @@ class AppDatabase extends _$AppDatabase {
     );
     return rows.single;
   }
+
+  Future<void> clearAllData() {
+    return transaction(() async {
+      await delete(clients).go();
+      await delete(companyProfiles).go();
+    });
+  }
 }
 
 LazyDatabase _openConnection() {

@@ -110,6 +110,18 @@ class MediaStore {
     }
   }
 
+  static Future<void> clearAll() async {
+    final dir = Directory(AppConfig.mediaDirectory);
+    if (!await dir.exists()) {
+      return;
+    }
+
+    imageCache.clear();
+    imageCache.clearLiveImages();
+    await dir.delete(recursive: true);
+    await dir.create(recursive: true);
+  }
+
   static Future<String> _writePreparedImage({
     required String sourcePath,
     required String category,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:invoices/app_info.dart';
 import 'package:invoices/config/app_config.dart';
 import 'package:invoices/data/app_database.dart';
 import 'package:invoices/l10n/localization_catalog.dart';
@@ -28,6 +29,7 @@ void main() {
     expect(find.text('Clients'), findsOneWidget);
     expect(find.text('Your company'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
+    expect(find.text(AppInfo.version), findsOneWidget);
 
     // Dispose Drift StreamBuilders, then advance time so cancel timers flush.
     await tester.pumpWidget(const SizedBox.shrink());

@@ -30,6 +30,23 @@ class LocalizationDefinition {
   String get settingsLight => _('settings_light');
   String get settingsDark => _('settings_dark');
   String get settingsLanguage => _('settings_language');
+  String get settingsData => _('settings_data');
+  String get settingsResetBody => _('settings_reset_body');
+  String get settingsResetButton => _('settings_reset_button');
+  String get settingsResetConfirmTitle => _('settings_reset_confirm_title');
+  String get settingsResetConfirmBody => _('settings_reset_confirm_body');
+  String get settingsResetConfirmAction => _('settings_reset_confirm_action');
+  String get settingsCancel => _('settings_cancel');
+  String get settingsResetDone => _('settings_reset_done');
+  String get settingsResetFailed => _('settings_reset_failed');
+  String get settingsPreferences => _('settings_preferences');
+  String get settingsRestoreBody => _('settings_restore_body');
+  String get settingsRestoreButton => _('settings_restore_button');
+  String get settingsRestoreConfirmTitle => _('settings_restore_confirm_title');
+  String get settingsRestoreConfirmBody => _('settings_restore_confirm_body');
+  String get settingsRestoreConfirmAction => _('settings_restore_confirm_action');
+  String get settingsRestoreDone => _('settings_restore_done');
+  String get settingsRestoreFailed => _('settings_restore_failed');
 
   // Invoices
   String get invoicesTitle => _('invoices_title');
@@ -119,6 +136,31 @@ class LocalizationDefinition {
       'settings_light': 'Light',
       'settings_dark': 'Dark',
       'settings_language': 'Language',
+      'settings_data': 'Data',
+      'settings_reset_body':
+          'Delete clients, company details, and logos. '
+          'Theme and language stay the same.',
+      'settings_reset_button': 'Delete all data',
+      'settings_reset_confirm_title': 'Delete all data?',
+      'settings_reset_confirm_body':
+          'This removes clients, company details, and stored logos. '
+          'You cannot undo this action. Preferences stay unchanged.',
+      'settings_reset_confirm_action': 'Delete',
+      'settings_cancel': 'Cancel',
+      'settings_reset_done': 'Application data deleted',
+      'settings_reset_failed': 'Could not delete application data',
+      'settings_preferences': 'Preferences',
+      'settings_restore_body':
+          'Restore preferences to the defaults. '
+          'Clients and company data stay unchanged.',
+      'settings_restore_button': 'Restore default settings',
+      'settings_restore_confirm_title': 'Restore default settings?',
+      'settings_restore_confirm_body':
+          'This resets preferences to the defaults. '
+          'Clients and company data stay unchanged.',
+      'settings_restore_confirm_action': 'Restore',
+      'settings_restore_done': 'Settings restored to defaults',
+      'settings_restore_failed': 'Could not restore settings',
       'invoices_title': 'Invoices',
       'invoices_subtitle':
           'Generate invoices from clients, company, and job lines',
