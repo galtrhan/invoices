@@ -8,13 +8,19 @@ import 'package:invoices/data/logo_draft.dart';
 import 'package:invoices/data/logo_save.dart';
 import 'package:invoices/data/media_store.dart';
 import 'package:invoices/l10n/localization_definition.dart';
+import 'package:invoices/pdf/invoice_template_catalog.dart';
 import 'package:invoices/widgets/master_detail.dart';
 import 'package:invoices/widgets/page_chrome.dart';
 
 class ClientsPage extends StatefulWidget {
-  const ClientsPage({super.key, required this.database});
+  const ClientsPage({
+    super.key,
+    required this.database,
+    required this.templates,
+  });
 
   final AppDatabase database;
+  final InvoiceTemplateCatalog templates;
 
   @override
   State<ClientsPage> createState() => _ClientsPageState();
@@ -95,12 +101,14 @@ class _ClientsPageState extends State<ClientsPage> {
                   _Create() => _ClientEditor(
                       key: const ValueKey('new'),
                       database: widget.database,
+                      templates: widget.templates,
                       client: null,
                       onSaved: _onSaved,
                     ),
                   _Selected() when selected != null => _ClientEditor(
                       key: ValueKey(selected.id),
                       database: widget.database,
+                      templates: widget.templates,
                       client: selected,
                       onSaved: _onSaved,
                       onDeleted: _onDeleted,
@@ -193,12 +201,14 @@ class _ClientEditor extends StatefulWidget {
   const _ClientEditor({
     super.key,
     required this.database,
+    required this.templates,
     required this.client,
     required this.onSaved,
     this.onDeleted,
   });
 
   final AppDatabase database;
+  final InvoiceTemplateCatalog templates;
   final Client? client;
   final ValueChanged<Client> onSaved;
   final VoidCallback? onDeleted;
@@ -215,6 +225,9 @@ class _ClientEditorState extends State<_ClientEditor> {
   final _address = TextEditingController();
   final _notes = TextEditingController();
   late final LogoDraft _logo;
+
+  /// Null means use Settings default.
+  String? _pdfTemplate;
 
   var _saving = false;
   var _importing = false;
@@ -252,6 +265,10 @@ class _ClientEditorState extends State<_ClientEditor> {
     _taxId.text = client?.taxId ?? '';
     _address.text = client?.address ?? '';
     _notes.text = client?.notes ?? '';
+    final stored = client?.pdfTemplate?.trim();
+    _pdfTemplate = (stored == null || stored.isEmpty)
+        ? null
+        : widget.templates.resolve(stored).name;
     _logo.resetFromStored(client?.logoPath);
   }
 
@@ -263,6 +280,7 @@ class _ClientEditorState extends State<_ClientEditor> {
       taxId: Value(_taxId.text.trim()),
       address: Value(_address.text.trim()),
       notes: Value(_notes.text.trim()),
+      pdfTemplate: Value(_pdfTemplate),
       logoPath: Value(logoPath),
     );
   }
@@ -462,6 +480,26 @@ class _ClientEditorState extends State<_ClientEditor> {
             decoration: InputDecoration(labelText: l10n.clientsFieldNotes),
             minLines: 2,
             maxLines: 3,
+          ),
+          const SizedBox(height: 16),
+          DropdownMenu<String?>(
+            key: ValueKey('client-pdf-template-$_pdfTemplate'),
+            initialSelection: _pdfTemplate,
+            label: Text(l10n.clientsFieldPdfTemplate),
+            expandedInsets: .zero,
+            enabled: !busy,
+            onSelected: (value) => setState(() => _pdfTemplate = value),
+            dropdownMenuEntries: [
+              DropdownMenuEntry(
+                value: null,
+                label: l10n.clientsPdfTemplateDefault,
+              ),
+              for (final option in widget.templates.templates)
+                DropdownMenuEntry(
+                  value: option.name,
+                  label: option.name,
+                ),
+            ],
           ),
           const SizedBox(height: 16),
           LogoUploadTile(

@@ -5,6 +5,7 @@ import 'package:invoices/data/app_database.dart';
 import 'package:invoices/data/media_store.dart';
 import 'package:invoices/l10n/localization_catalog.dart';
 import 'package:invoices/l10n/localization_definition.dart';
+import 'package:invoices/pdf/invoice_template_catalog.dart';
 import 'package:invoices/theme/theme_catalog.dart';
 import 'package:invoices/widgets/page_chrome.dart';
 
@@ -15,11 +16,14 @@ class SettingsPage extends StatelessWidget {
     required this.theme,
     required this.colorTheme,
     required this.localization,
+    required this.pdfTemplate,
     required this.themes,
     required this.localizations,
+    required this.templates,
     required this.onThemeChanged,
     required this.onColorThemeChanged,
     required this.onLocalizationChanged,
+    required this.onPdfTemplateChanged,
     required this.onRestoreSettings,
   });
 
@@ -27,11 +31,14 @@ class SettingsPage extends StatelessWidget {
   final AppThemePreference theme;
   final String colorTheme;
   final String localization;
+  final String pdfTemplate;
   final ThemeCatalog themes;
   final LocalizationCatalog localizations;
+  final InvoiceTemplateCatalog templates;
   final ValueChanged<AppThemePreference> onThemeChanged;
   final ValueChanged<String> onColorThemeChanged;
   final ValueChanged<String> onLocalizationChanged;
+  final ValueChanged<String> onPdfTemplateChanged;
   final Future<void> Function() onRestoreSettings;
 
   Future<void> _runConfirmed({
@@ -208,6 +215,28 @@ class SettingsPage extends StatelessWidget {
                       },
                       dropdownMenuEntries: [
                         for (final option in localizations.localizations)
+                          DropdownMenuEntry(
+                            value: option.name,
+                            label: option.name,
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SectionPanel(
+                    title: l10n.settingsPdfTemplate,
+                    child: DropdownMenu<String>(
+                      key: ValueKey('pdf-template-$pdfTemplate'),
+                      initialSelection: pdfTemplate,
+                      label: Text(l10n.settingsPdfTemplate),
+                      expandedInsets: .zero,
+                      onSelected: (value) {
+                        if (value != null) {
+                          onPdfTemplateChanged(value);
+                        }
+                      },
+                      dropdownMenuEntries: [
+                        for (final option in templates.templates)
                           DropdownMenuEntry(
                             value: option.name,
                             label: option.name,

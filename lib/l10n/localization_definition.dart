@@ -32,6 +32,7 @@ class LocalizationDefinition {
   String get settingsLight => _('settings_light');
   String get settingsDark => _('settings_dark');
   String get settingsLanguage => _('settings_language');
+  String get settingsPdfTemplate => _('settings_pdf_template');
   String get settingsData => _('settings_data');
   String get settingsResetBody => _('settings_reset_body');
   String get settingsResetButton => _('settings_reset_button');
@@ -73,6 +74,9 @@ class LocalizationDefinition {
   String get invoicesSave => _('invoices_save');
   String get invoicesExport => _('invoices_export');
   String get invoicesExportLanguage => _('invoices_export_language');
+  String get invoicesExportTemplate => _('invoices_export_template');
+  String get invoicesExportDialogTitle => _('invoices_export_dialog_title');
+  String get invoicesExportConfirm => _('invoices_export_confirm');
   String get invoicesExported => _('invoices_exported');
   String get invoicesExportFailed => _('invoices_export_failed');
   String get invoicesExportSaveFirst => _('invoices_export_save_first');
@@ -136,6 +140,8 @@ class LocalizationDefinition {
   String get clientsFieldTax => _('clients_field_tax');
   String get clientsFieldAddress => _('clients_field_address');
   String get clientsFieldNotes => _('clients_field_notes');
+  String get clientsFieldPdfTemplate => _('clients_field_pdf_template');
+  String get clientsPdfTemplateDefault => _('clients_pdf_template_default');
   String get clientsLogoTitle => _('clients_logo_title');
   String get clientsLogoSubtitle => _('clients_logo_subtitle');
   String get clientsCreate => _('clients_create');
@@ -193,6 +199,7 @@ class LocalizationDefinition {
       'settings_light': 'Light',
       'settings_dark': 'Dark',
       'settings_language': 'Language',
+      'settings_pdf_template': 'PDF template',
       'settings_data': 'Data',
       'settings_reset_body':
           'Delete invoices, clients, company details, and logos. '
@@ -250,6 +257,9 @@ class LocalizationDefinition {
       'invoices_save': 'Save invoice',
       'invoices_export': 'Export',
       'invoices_export_language': 'PDF language',
+      'invoices_export_template': 'PDF template',
+      'invoices_export_dialog_title': 'Export PDF',
+      'invoices_export_confirm': 'Preview',
       'invoices_exported': 'Invoice PDF saved',
       'invoices_export_failed': 'Could not export invoice PDF',
       'invoices_export_save_first': 'Save the invoice before you export.',
@@ -314,6 +324,8 @@ class LocalizationDefinition {
       'clients_field_tax': 'Tax / VAT ID',
       'clients_field_address': 'Address',
       'clients_field_notes': 'Contact notes',
+      'clients_field_pdf_template': 'PDF template',
+      'clients_pdf_template_default': 'Use default',
       'clients_logo_title': 'Logo',
       'clients_logo_subtitle': 'Used on invoices for this client when relevant.',
       'logo_upload': 'Upload',

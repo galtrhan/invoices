@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import 'package:invoices/l10n/localization_definition.dart';
+import 'package:invoices/pdf/invoice_template_definition.dart';
 import 'package:invoices/theme/theme_definition.dart';
 
 enum AppThemePreference { light, dark }
@@ -14,6 +15,7 @@ class AppConfig {
     this.theme = AppThemePreference.light,
     this.colorTheme = ThemeDefinition.defaultName,
     this.localization = LocalizationDefinition.defaultName,
+    this.pdfTemplate = InvoiceTemplateDefinition.defaultName,
   });
 
   final bool windowDecorations;
@@ -24,6 +26,9 @@ class AppConfig {
 
   /// Localization `name` from JSON (or English).
   final String localization;
+
+  /// PDF template `name` from JSON (or Default).
+  final String pdfTemplate;
 
   static const AppConfig defaults = AppConfig();
 
@@ -56,6 +61,9 @@ class AppConfig {
   static String get localizationsDirectory =>
       configSubdirectory('localizations');
 
+  /// `<configDir>/templates`.
+  static String get templatesDirectory => configSubdirectory('templates');
+
   static String get databasePath => configSubdirectory('invoices.db');
 
   static String get mediaDirectory => configSubdirectory('media');
@@ -65,12 +73,14 @@ class AppConfig {
     AppThemePreference? theme,
     String? colorTheme,
     String? localization,
+    String? pdfTemplate,
   }) {
     return AppConfig(
       windowDecorations: windowDecorations ?? this.windowDecorations,
       theme: theme ?? this.theme,
       colorTheme: colorTheme ?? this.colorTheme,
       localization: localization ?? this.localization,
+      pdfTemplate: pdfTemplate ?? this.pdfTemplate,
     );
   }
 
@@ -79,6 +89,7 @@ class AppConfig {
         'theme': theme == AppThemePreference.dark ? 'dark' : 'light',
         'color_theme': colorTheme,
         'localization': localization,
+        'pdf_template': pdfTemplate,
       };
 
   /// Accepts display names or legacy slugs (`tokyo_night` → `tokyo night`).
@@ -94,6 +105,9 @@ class AppConfig {
 
   static String localizationFromJson(Object? value) =>
       namedPreferenceFromJson(value, LocalizationDefinition.defaultName);
+
+  static String pdfTemplateFromJson(Object? value) =>
+      namedPreferenceFromJson(value, InvoiceTemplateDefinition.defaultName);
 
   static Future<AppConfig> load() async {
     final file = File(configPath);
@@ -115,6 +129,7 @@ class AppConfig {
             : AppThemePreference.light,
         colorTheme: colorThemeFromJson(decoded['color_theme']),
         localization: localizationFromJson(decoded['localization']),
+        pdfTemplate: pdfTemplateFromJson(decoded['pdf_template']),
       );
     } on FormatException {
       return defaults;

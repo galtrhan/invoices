@@ -31,6 +31,7 @@ class Clients extends Table {
   TextColumn get taxId => text().withDefault(const Constant(''))();
   TextColumn get address => text().withDefault(const Constant(''))();
   TextColumn get notes => text().withDefault(const Constant(''))();
+  TextColumn get pdfTemplate => text().nullable()();
   TextColumn get logoPath => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -108,7 +109,7 @@ class AppDatabase extends _$AppDatabase {
   );
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -121,6 +122,9 @@ class AppDatabase extends _$AppDatabase {
         if (from < 3) {
           await m.createTable(invoices);
           await m.createTable(invoiceLines);
+        }
+        if (from < 4) {
+          await m.addColumn(clients, clients.pdfTemplate);
         }
       },
     );

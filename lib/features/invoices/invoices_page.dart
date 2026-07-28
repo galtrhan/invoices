@@ -12,6 +12,8 @@ import 'package:invoices/features/invoices/invoice_pdf.dart';
 import 'package:invoices/features/invoices/invoice_pdf_preview_page.dart';
 import 'package:invoices/l10n/localization_catalog.dart';
 import 'package:invoices/l10n/localization_definition.dart';
+import 'package:invoices/pdf/invoice_template_catalog.dart';
+import 'package:invoices/pdf/invoice_template_definition.dart';
 import 'package:invoices/widgets/master_detail.dart';
 import 'package:invoices/widgets/page_chrome.dart';
 
@@ -52,10 +54,14 @@ class InvoicesPage extends StatefulWidget {
     super.key,
     required this.database,
     required this.localizations,
+    required this.templates,
+    required this.pdfTemplate,
   });
 
   final AppDatabase database;
   final LocalizationCatalog localizations;
+  final InvoiceTemplateCatalog templates;
+  final String pdfTemplate;
 
   @override
   State<InvoicesPage> createState() => _InvoicesPageState();
@@ -129,6 +135,8 @@ class _InvoicesPageState extends State<InvoicesPage> {
                       key: const ValueKey('new'),
                       database: widget.database,
                       localizations: widget.localizations,
+                      templates: widget.templates,
+                      pdfTemplate: widget.pdfTemplate,
                       invoice: null,
                       onSaved: _select,
                     ),
@@ -136,6 +144,8 @@ class _InvoicesPageState extends State<InvoicesPage> {
                       key: ValueKey(selected.id),
                       database: widget.database,
                       localizations: widget.localizations,
+                      templates: widget.templates,
+                      pdfTemplate: widget.pdfTemplate,
                       invoice: selected,
                       onSaved: _select,
                       onDeleted: () =>
@@ -277,6 +287,8 @@ class _InvoiceEditor extends StatefulWidget {
     super.key,
     required this.database,
     required this.localizations,
+    required this.templates,
+    required this.pdfTemplate,
     required this.invoice,
     required this.onSaved,
     this.onDeleted,
@@ -284,6 +296,8 @@ class _InvoiceEditor extends StatefulWidget {
 
   final AppDatabase database;
   final LocalizationCatalog localizations;
+  final InvoiceTemplateCatalog templates;
+  final String pdfTemplate;
   final Invoice? invoice;
   final ValueChanged<Invoice> onSaved;
   final VoidCallback? onDeleted;
@@ -576,7 +590,58 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
     }
   }
 
-  Future<void> _exportPdf(LocalizationDefinition exportL10n) async {
+  Future<void> _openExportDialog() async {
+    if (_exporting) {
+      return;
+    }
+
+    final uiL10n = AppLocalizations.of(context);
+    if (widget.invoice == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(uiL10n.invoicesExportSaveFirst)),
+      );
+      return;
+    }
+
+    Client? client;
+    final clientId = _clientId;
+    if (clientId != null) {
+      client = await widget.database.getClient(clientId);
+    }
+    if (!mounted) {
+      return;
+    }
+    final preferredTemplate = widget.templates.resolvePreferred(
+      clientTemplate: client?.pdfTemplate,
+      settingsTemplate: widget.pdfTemplate,
+    );
+
+    final choice = await showDialog<_ExportChoice>(
+      context: context,
+      builder: (dialogContext) {
+        return _ExportPdfDialog(
+          localizations: widget.localizations,
+          templates: widget.templates,
+          initialLanguage: AppLocalizations.of(context).name,
+          initialTemplate: preferredTemplate.name,
+        );
+      },
+    );
+
+    if (choice == null || !mounted) {
+      return;
+    }
+
+    await _exportPdf(
+      exportL10n: widget.localizations.resolve(choice.language),
+      template: widget.templates.resolve(choice.template),
+    );
+  }
+
+  Future<void> _exportPdf({
+    required LocalizationDefinition exportL10n,
+    required InvoiceTemplateDefinition template,
+  }) async {
     if (_exporting) {
       return;
     }
@@ -613,8 +678,12 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
       final number =
           _number.text.trim().isEmpty ? invoice.number : _number.text.trim();
       final clientName = invoice.clientName;
-      final logoBytes = await _readLogoBytes(invoice.companyLogoPath);
-      final fonts = await _loadInvoicePdfFonts();
+      final logoAndFonts = await (
+        _readLogoBytes(invoice.companyLogoPath),
+        _loadInvoicePdfFonts(),
+      ).wait;
+      final logoBytes = logoAndFonts.$1;
+      final fonts = logoAndFonts.$2;
       final bytes = await buildInvoicePdf(
         InvoicePdfData(
           number: number,
@@ -634,6 +703,7 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
           clientEmail: invoice.clientEmail,
           lines: lineInputs,
           labels: InvoicePdfLabels.fromLocalization(exportL10n),
+          template: template,
         ),
       );
 
@@ -891,42 +961,9 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
                 child: Text(l10n.invoicesSave),
               ),
               const SizedBox(width: 8),
-              MenuAnchor(
-                builder: (context, controller, child) {
-                  return OutlinedButton(
-                    onPressed: busy || isNew
-                        ? null
-                        : () {
-                            if (controller.isOpen) {
-                              controller.close();
-                            } else {
-                              controller.open();
-                            }
-                          },
-                    child: Row(
-                      mainAxisSize: .min,
-                      children: [
-                        Text(l10n.invoicesExport),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.arrow_drop_down, size: 18),
-                      ],
-                    ),
-                  );
-                },
-                menuChildren: [
-                  Padding(
-                    padding: const .fromLTRB(12, 8, 12, 4),
-                    child: Text(
-                      l10n.invoicesExportLanguage,
-                      style: textTheme.labelMedium,
-                    ),
-                  ),
-                  for (final pack in widget.localizations.localizations)
-                    MenuItemButton(
-                      onPressed: () => _exportPdf(pack),
-                      child: Text(pack.name),
-                    ),
-                ],
+              OutlinedButton(
+                onPressed: busy || isNew ? null : _openExportDialog,
+                child: Text(l10n.invoicesExport),
               ),
               if (!isNew) ...[
                 const Spacer(),
@@ -1043,6 +1080,106 @@ class _JobLineRow extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ExportChoice {
+  const _ExportChoice({
+    required this.language,
+    required this.template,
+  });
+
+  final String language;
+  final String template;
+}
+
+class _ExportPdfDialog extends StatefulWidget {
+  const _ExportPdfDialog({
+    required this.localizations,
+    required this.templates,
+    required this.initialLanguage,
+    required this.initialTemplate,
+  });
+
+  final LocalizationCatalog localizations;
+  final InvoiceTemplateCatalog templates;
+  final String initialLanguage;
+  final String initialTemplate;
+
+  @override
+  State<_ExportPdfDialog> createState() => _ExportPdfDialogState();
+}
+
+class _ExportPdfDialogState extends State<_ExportPdfDialog> {
+  late String _language = widget.initialLanguage;
+  late String _template = widget.initialTemplate;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    return AlertDialog(
+      title: Text(l10n.invoicesExportDialogTitle),
+      content: SizedBox(
+        width: 360,
+        child: Column(
+          mainAxisSize: .min,
+          children: [
+            DropdownMenu<String>(
+              key: ValueKey('export-language-$_language'),
+              initialSelection: _language,
+              label: Text(l10n.invoicesExportLanguage),
+              expandedInsets: .zero,
+              onSelected: (value) {
+                if (value != null) {
+                  setState(() => _language = value);
+                }
+              },
+              dropdownMenuEntries: [
+                for (final option in widget.localizations.localizations)
+                  DropdownMenuEntry(
+                    value: option.name,
+                    label: option.name,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            DropdownMenu<String>(
+              key: ValueKey('export-template-$_template'),
+              initialSelection: _template,
+              label: Text(l10n.invoicesExportTemplate),
+              expandedInsets: .zero,
+              onSelected: (value) {
+                if (value != null) {
+                  setState(() => _template = value);
+                }
+              },
+              dropdownMenuEntries: [
+                for (final option in widget.templates.templates)
+                  DropdownMenuEntry(
+                    value: option.name,
+                    label: option.name,
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.invoicesPreviewCancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(context).pop(
+              _ExportChoice(language: _language, template: _template),
+            );
+          },
+          child: Text(l10n.invoicesExportConfirm),
         ),
       ],
     );

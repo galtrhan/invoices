@@ -659,6 +659,17 @@ class $ClientsTable extends Clients with TableInfo<$ClientsTable, Client> {
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _pdfTemplateMeta = const VerificationMeta(
+    'pdfTemplate',
+  );
+  @override
+  late final GeneratedColumn<String> pdfTemplate = GeneratedColumn<String>(
+    'pdf_template',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _logoPathMeta = const VerificationMeta(
     'logoPath',
   );
@@ -701,6 +712,7 @@ class $ClientsTable extends Clients with TableInfo<$ClientsTable, Client> {
     taxId,
     address,
     notes,
+    pdfTemplate,
     logoPath,
     createdAt,
     updatedAt,
@@ -754,6 +766,15 @@ class $ClientsTable extends Clients with TableInfo<$ClientsTable, Client> {
       context.handle(
         _notesMeta,
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('pdf_template')) {
+      context.handle(
+        _pdfTemplateMeta,
+        pdfTemplate.isAcceptableOrUnknown(
+          data['pdf_template']!,
+          _pdfTemplateMeta,
+        ),
       );
     }
     if (data.containsKey('logo_path')) {
@@ -815,6 +836,10 @@ class $ClientsTable extends Clients with TableInfo<$ClientsTable, Client> {
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       )!,
+      pdfTemplate: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pdf_template'],
+      ),
       logoPath: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}logo_path'],
@@ -844,6 +869,7 @@ class Client extends DataClass implements Insertable<Client> {
   final String taxId;
   final String address;
   final String notes;
+  final String? pdfTemplate;
   final String? logoPath;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -855,6 +881,7 @@ class Client extends DataClass implements Insertable<Client> {
     required this.taxId,
     required this.address,
     required this.notes,
+    this.pdfTemplate,
     this.logoPath,
     required this.createdAt,
     required this.updatedAt,
@@ -869,6 +896,9 @@ class Client extends DataClass implements Insertable<Client> {
     map['tax_id'] = Variable<String>(taxId);
     map['address'] = Variable<String>(address);
     map['notes'] = Variable<String>(notes);
+    if (!nullToAbsent || pdfTemplate != null) {
+      map['pdf_template'] = Variable<String>(pdfTemplate);
+    }
     if (!nullToAbsent || logoPath != null) {
       map['logo_path'] = Variable<String>(logoPath);
     }
@@ -886,6 +916,9 @@ class Client extends DataClass implements Insertable<Client> {
       taxId: Value(taxId),
       address: Value(address),
       notes: Value(notes),
+      pdfTemplate: pdfTemplate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pdfTemplate),
       logoPath: logoPath == null && nullToAbsent
           ? const Value.absent()
           : Value(logoPath),
@@ -907,6 +940,7 @@ class Client extends DataClass implements Insertable<Client> {
       taxId: serializer.fromJson<String>(json['taxId']),
       address: serializer.fromJson<String>(json['address']),
       notes: serializer.fromJson<String>(json['notes']),
+      pdfTemplate: serializer.fromJson<String?>(json['pdfTemplate']),
       logoPath: serializer.fromJson<String?>(json['logoPath']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -923,6 +957,7 @@ class Client extends DataClass implements Insertable<Client> {
       'taxId': serializer.toJson<String>(taxId),
       'address': serializer.toJson<String>(address),
       'notes': serializer.toJson<String>(notes),
+      'pdfTemplate': serializer.toJson<String?>(pdfTemplate),
       'logoPath': serializer.toJson<String?>(logoPath),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -937,6 +972,7 @@ class Client extends DataClass implements Insertable<Client> {
     String? taxId,
     String? address,
     String? notes,
+    Value<String?> pdfTemplate = const Value.absent(),
     Value<String?> logoPath = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -948,6 +984,7 @@ class Client extends DataClass implements Insertable<Client> {
     taxId: taxId ?? this.taxId,
     address: address ?? this.address,
     notes: notes ?? this.notes,
+    pdfTemplate: pdfTemplate.present ? pdfTemplate.value : this.pdfTemplate,
     logoPath: logoPath.present ? logoPath.value : this.logoPath,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -961,6 +998,9 @@ class Client extends DataClass implements Insertable<Client> {
       taxId: data.taxId.present ? data.taxId.value : this.taxId,
       address: data.address.present ? data.address.value : this.address,
       notes: data.notes.present ? data.notes.value : this.notes,
+      pdfTemplate: data.pdfTemplate.present
+          ? data.pdfTemplate.value
+          : this.pdfTemplate,
       logoPath: data.logoPath.present ? data.logoPath.value : this.logoPath,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -977,6 +1017,7 @@ class Client extends DataClass implements Insertable<Client> {
           ..write('taxId: $taxId, ')
           ..write('address: $address, ')
           ..write('notes: $notes, ')
+          ..write('pdfTemplate: $pdfTemplate, ')
           ..write('logoPath: $logoPath, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -993,6 +1034,7 @@ class Client extends DataClass implements Insertable<Client> {
     taxId,
     address,
     notes,
+    pdfTemplate,
     logoPath,
     createdAt,
     updatedAt,
@@ -1008,6 +1050,7 @@ class Client extends DataClass implements Insertable<Client> {
           other.taxId == this.taxId &&
           other.address == this.address &&
           other.notes == this.notes &&
+          other.pdfTemplate == this.pdfTemplate &&
           other.logoPath == this.logoPath &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -1021,6 +1064,7 @@ class ClientsCompanion extends UpdateCompanion<Client> {
   final Value<String> taxId;
   final Value<String> address;
   final Value<String> notes;
+  final Value<String?> pdfTemplate;
   final Value<String?> logoPath;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -1032,6 +1076,7 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     this.taxId = const Value.absent(),
     this.address = const Value.absent(),
     this.notes = const Value.absent(),
+    this.pdfTemplate = const Value.absent(),
     this.logoPath = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1044,6 +1089,7 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     this.taxId = const Value.absent(),
     this.address = const Value.absent(),
     this.notes = const Value.absent(),
+    this.pdfTemplate = const Value.absent(),
     this.logoPath = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -1057,6 +1103,7 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     Expression<String>? taxId,
     Expression<String>? address,
     Expression<String>? notes,
+    Expression<String>? pdfTemplate,
     Expression<String>? logoPath,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -1069,6 +1116,7 @@ class ClientsCompanion extends UpdateCompanion<Client> {
       if (taxId != null) 'tax_id': taxId,
       if (address != null) 'address': address,
       if (notes != null) 'notes': notes,
+      if (pdfTemplate != null) 'pdf_template': pdfTemplate,
       if (logoPath != null) 'logo_path': logoPath,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -1083,6 +1131,7 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     Value<String>? taxId,
     Value<String>? address,
     Value<String>? notes,
+    Value<String?>? pdfTemplate,
     Value<String?>? logoPath,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -1095,6 +1144,7 @@ class ClientsCompanion extends UpdateCompanion<Client> {
       taxId: taxId ?? this.taxId,
       address: address ?? this.address,
       notes: notes ?? this.notes,
+      pdfTemplate: pdfTemplate ?? this.pdfTemplate,
       logoPath: logoPath ?? this.logoPath,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1125,6 +1175,9 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (pdfTemplate.present) {
+      map['pdf_template'] = Variable<String>(pdfTemplate.value);
+    }
     if (logoPath.present) {
       map['logo_path'] = Variable<String>(logoPath.value);
     }
@@ -1147,6 +1200,7 @@ class ClientsCompanion extends UpdateCompanion<Client> {
           ..write('taxId: $taxId, ')
           ..write('address: $address, ')
           ..write('notes: $notes, ')
+          ..write('pdfTemplate: $pdfTemplate, ')
           ..write('logoPath: $logoPath, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -3118,6 +3172,7 @@ typedef $$ClientsTableCreateCompanionBuilder =
       Value<String> taxId,
       Value<String> address,
       Value<String> notes,
+      Value<String?> pdfTemplate,
       Value<String?> logoPath,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -3131,6 +3186,7 @@ typedef $$ClientsTableUpdateCompanionBuilder =
       Value<String> taxId,
       Value<String> address,
       Value<String> notes,
+      Value<String?> pdfTemplate,
       Value<String?> logoPath,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -3177,6 +3233,11 @@ class $$ClientsTableFilterComposer
 
   ColumnFilters<String> get notes => $composableBuilder(
     column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pdfTemplate => $composableBuilder(
+    column: $table.pdfTemplate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3240,6 +3301,11 @@ class $$ClientsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get pdfTemplate => $composableBuilder(
+    column: $table.pdfTemplate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get logoPath => $composableBuilder(
     column: $table.logoPath,
     builder: (column) => ColumnOrderings(column),
@@ -3286,6 +3352,11 @@ class $$ClientsTableAnnotationComposer
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
+  GeneratedColumn<String> get pdfTemplate => $composableBuilder(
+    column: $table.pdfTemplate,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get logoPath =>
       $composableBuilder(column: $table.logoPath, builder: (column) => column);
 
@@ -3331,6 +3402,7 @@ class $$ClientsTableTableManager
                 Value<String> taxId = const Value.absent(),
                 Value<String> address = const Value.absent(),
                 Value<String> notes = const Value.absent(),
+                Value<String?> pdfTemplate = const Value.absent(),
                 Value<String?> logoPath = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -3342,6 +3414,7 @@ class $$ClientsTableTableManager
                 taxId: taxId,
                 address: address,
                 notes: notes,
+                pdfTemplate: pdfTemplate,
                 logoPath: logoPath,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -3355,6 +3428,7 @@ class $$ClientsTableTableManager
                 Value<String> taxId = const Value.absent(),
                 Value<String> address = const Value.absent(),
                 Value<String> notes = const Value.absent(),
+                Value<String?> pdfTemplate = const Value.absent(),
                 Value<String?> logoPath = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -3366,6 +3440,7 @@ class $$ClientsTableTableManager
                 taxId: taxId,
                 address: address,
                 notes: notes,
+                pdfTemplate: pdfTemplate,
                 logoPath: logoPath,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

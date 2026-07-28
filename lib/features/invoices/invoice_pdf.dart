@@ -4,6 +4,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import 'package:invoices/l10n/localization_definition.dart';
+import 'package:invoices/pdf/invoice_template_definition.dart';
 
 class InvoicePdfLabels {
   const InvoicePdfLabels({
@@ -99,6 +100,7 @@ class InvoicePdfData {
     required this.fontRegular,
     required this.fontBold,
     this.logoBytes,
+    this.template = InvoiceTemplateDefinition.builtinDefault,
   });
 
   final String number;
@@ -118,6 +120,7 @@ class InvoicePdfData {
   final String clientEmail;
   final List<InvoicePdfLine> lines;
   final InvoicePdfLabels labels;
+  final InvoiceTemplateDefinition template;
 
   double get total =>
       lines.fold<double>(0, (sum, line) => sum + line.total);
@@ -125,18 +128,28 @@ class InvoicePdfData {
 
 Future<Uint8List> buildInvoicePdf(InvoicePdfData data) async {
   final doc = pw.Document();
+  final template = data.template;
   final logo =
       data.logoBytes == null ? null : pw.MemoryImage(data.logoBytes!);
   final total = data.total;
   final labels = data.labels;
-  final border = pw.TableBorder.all(width: 0.7, color: PdfColors.black);
-  final headerFill = PdfColors.grey300;
+  final border = pw.TableBorder.all(
+    width: template.tableBorderWidth,
+    color: _pdfColor(template.borderColor),
+  );
+  final headerFill = _pdfColor(template.headerFill);
   final theme = _pdfTheme(data.fontRegular, data.fontBold);
+  final showLogo = template.showLogo && logo != null;
 
   doc.addPage(
     pw.Page(
       pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.fromLTRB(48, 48, 48, 48),
+      margin: pw.EdgeInsets.fromLTRB(
+        template.marginLeft,
+        template.marginTop,
+        template.marginRight,
+        template.marginBottom,
+      ),
       theme: theme,
       build: (context) {
         return pw.Column(
@@ -157,10 +170,10 @@ Future<Uint8List> buildInvoicePdf(InvoicePdfData data) async {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
-                    if (logo != null)
+                    if (showLogo)
                       pw.Container(
-                        width: 72,
-                        height: 72,
+                        width: template.logoMaxWidth,
+                        height: template.logoMaxHeight,
                         margin: const pw.EdgeInsets.only(bottom: 8),
                         child: pw.Image(logo, fit: pw.BoxFit.contain),
                       ),
@@ -171,19 +184,23 @@ Future<Uint8List> buildInvoicePdf(InvoicePdfData data) async {
                 ),
               ],
             ),
-            pw.SizedBox(height: 16),
-            ..._companyBlock(data),
-            pw.SizedBox(height: 16),
-            ..._payerBlock(data),
-            pw.SizedBox(height: 20),
+            pw.SizedBox(height: template.spacingAfterHeader),
+            if (template.showCompanyBlock) ...[
+              ..._companyBlock(data, template),
+              if (template.showPayerBlock)
+                pw.SizedBox(height: template.spacingAfterParties),
+            ],
+            if (template.showPayerBlock) ..._payerBlock(data),
+            if (template.showCompanyBlock || template.showPayerBlock)
+              pw.SizedBox(height: template.spacingBeforeTable),
             pw.Table(
               border: border,
-              columnWidths: const {
-                0: pw.FlexColumnWidth(3.2),
-                1: pw.FlexColumnWidth(1.1),
-                2: pw.FlexColumnWidth(1.1),
-                3: pw.FlexColumnWidth(1.1),
-                4: pw.FlexColumnWidth(1.4),
+              columnWidths: {
+                0: pw.FlexColumnWidth(template.columnService),
+                1: pw.FlexColumnWidth(template.columnUnit),
+                2: pw.FlexColumnWidth(template.columnAmount),
+                3: pw.FlexColumnWidth(template.columnPrice),
+                4: pw.FlexColumnWidth(template.columnSum),
               },
               children: [
                 pw.TableRow(
@@ -254,12 +271,15 @@ Future<Uint8List> buildInvoicePdf(InvoicePdfData data) async {
                 ),
               ],
             ),
-            pw.SizedBox(height: 14),
-            pw.Text(
-              '${labels.amountInWords} ${_amountInWords(total)}',
-            ),
+            if (template.showAmountInWords) ...[
+              pw.SizedBox(height: 14),
+              pw.Text(
+                '${labels.amountInWords} ${_amountInWords(total)}',
+              ),
+            ],
             pw.Spacer(),
-            pw.Text(labels.electronicFooter),
+            if (template.showElectronicFooter)
+              pw.Text(labels.electronicFooter),
           ],
         );
       },
@@ -267,6 +287,12 @@ Future<Uint8List> buildInvoicePdf(InvoicePdfData data) async {
   );
 
   return doc.save();
+}
+
+PdfColor _pdfColor(String hex) {
+  final raw = hex.startsWith('#') ? hex.substring(1) : hex;
+  final value = int.tryParse(raw, radix: 16) ?? 0;
+  return PdfColor.fromInt(0xFF000000 | value);
 }
 
 pw.ThemeData? _cachedPdfTheme;
@@ -287,13 +313,17 @@ pw.ThemeData _pdfTheme(ByteData regular, ByteData bold) {
   );
 }
 
-List<pw.Widget> _companyBlock(InvoicePdfData data) {
+List<pw.Widget> _companyBlock(
+  InvoicePdfData data,
+  InvoiceTemplateDefinition template,
+) {
   final lines = <String>[
     if (data.companyName.trim().isNotEmpty) data.companyName.trim(),
     if (data.companyTaxId.trim().isNotEmpty)
       '${data.labels.regNo} ${data.companyTaxId.trim()}',
     ..._splitLines(data.companyAddress),
-    ..._splitLines(data.companyPaymentDetails),
+    if (template.showPaymentDetails)
+      ..._splitLines(data.companyPaymentDetails),
   ];
   return [
     for (final line in lines)

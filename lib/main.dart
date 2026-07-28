@@ -6,6 +6,7 @@ import 'package:invoices/config/app_config.dart';
 import 'package:invoices/data/app_database.dart';
 import 'package:invoices/l10n/localization_catalog.dart';
 import 'package:invoices/l10n/localization_definition.dart';
+import 'package:invoices/pdf/invoice_template_catalog.dart';
 import 'package:invoices/shell/app_shell.dart';
 import 'package:invoices/theme/theme_catalog.dart';
 
@@ -16,18 +17,22 @@ Future<void> main() async {
   final results = await (
     ThemeCatalog.load(AppConfig.themesDirectory),
     LocalizationCatalog.load(AppConfig.localizationsDirectory),
+    InvoiceTemplateCatalog.load(AppConfig.templatesDirectory),
     AppConfig.load(),
   ).wait;
   final themes = results.$1;
   final localizations = results.$2;
-  final loaded = results.$3;
+  final templates = results.$3;
+  final loaded = results.$4;
   final database = AppDatabase();
 
   final resolvedTheme = themes.resolve(loaded.colorTheme).name;
   final resolvedLocale = localizations.resolve(loaded.localization).name;
+  final resolvedTemplate = templates.resolve(loaded.pdfTemplate).name;
   final config = loaded.copyWith(
     colorTheme: resolvedTheme,
     localization: resolvedLocale,
+    pdfTemplate: resolvedTemplate,
   );
 
   const windowOptions = WindowOptions(
@@ -49,6 +54,7 @@ Future<void> main() async {
       config: config,
       themes: themes,
       localizations: localizations,
+      templates: templates,
       database: database,
     ),
   );
@@ -60,12 +66,14 @@ class InvoicesApp extends StatefulWidget {
     required this.config,
     required this.themes,
     required this.localizations,
+    required this.templates,
     required this.database,
   });
 
   final AppConfig config;
   final ThemeCatalog themes;
   final LocalizationCatalog localizations;
+  final InvoiceTemplateCatalog templates;
   final AppDatabase database;
 
   @override
@@ -113,12 +121,15 @@ class _InvoicesAppState extends State<InvoicesApp> {
           config: _config,
           themes: widget.themes,
           localizations: widget.localizations,
+          templates: widget.templates,
           database: widget.database,
           onThemeChanged: (theme) => _persist(_config.copyWith(theme: theme)),
           onColorThemeChanged: (colorTheme) =>
               _persist(_config.copyWith(colorTheme: colorTheme)),
           onLocalizationChanged: (localization) =>
               _persist(_config.copyWith(localization: localization)),
+          onPdfTemplateChanged: (pdfTemplate) =>
+              _persist(_config.copyWith(pdfTemplate: pdfTemplate)),
           onRestoreSettings: () => _persist(AppConfig.defaults),
         ),
       ),
