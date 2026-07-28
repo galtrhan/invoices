@@ -92,6 +92,41 @@ class $CompanyProfilesTable extends CompanyProfiles
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _invoiceNumberFormatMeta =
+      const VerificationMeta('invoiceNumberFormat');
+  @override
+  late final GeneratedColumn<String> invoiceNumberFormat =
+      GeneratedColumn<String>(
+        'invoice_number_format',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(defaultInvoiceNumberFormat),
+      );
+  static const VerificationMeta _lastInvoiceSequenceMeta =
+      const VerificationMeta('lastInvoiceSequence');
+  @override
+  late final GeneratedColumn<int> lastInvoiceSequence = GeneratedColumn<int>(
+    'last_invoice_sequence',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lastInvoiceSequenceYearMeta =
+      const VerificationMeta('lastInvoiceSequenceYear');
+  @override
+  late final GeneratedColumn<int> lastInvoiceSequenceYear =
+      GeneratedColumn<int>(
+        'last_invoice_sequence_year',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
   static const VerificationMeta _logoPathMeta = const VerificationMeta(
     'logoPath',
   );
@@ -124,6 +159,9 @@ class $CompanyProfilesTable extends CompanyProfiles
     address,
     paymentDetails,
     notes,
+    invoiceNumberFormat,
+    lastInvoiceSequence,
+    lastInvoiceSequenceYear,
     logoPath,
     updatedAt,
   ];
@@ -187,6 +225,33 @@ class $CompanyProfilesTable extends CompanyProfiles
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
+    if (data.containsKey('invoice_number_format')) {
+      context.handle(
+        _invoiceNumberFormatMeta,
+        invoiceNumberFormat.isAcceptableOrUnknown(
+          data['invoice_number_format']!,
+          _invoiceNumberFormatMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_invoice_sequence')) {
+      context.handle(
+        _lastInvoiceSequenceMeta,
+        lastInvoiceSequence.isAcceptableOrUnknown(
+          data['last_invoice_sequence']!,
+          _lastInvoiceSequenceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_invoice_sequence_year')) {
+      context.handle(
+        _lastInvoiceSequenceYearMeta,
+        lastInvoiceSequenceYear.isAcceptableOrUnknown(
+          data['last_invoice_sequence_year']!,
+          _lastInvoiceSequenceYearMeta,
+        ),
+      );
+    }
     if (data.containsKey('logo_path')) {
       context.handle(
         _logoPathMeta,
@@ -242,6 +307,18 @@ class $CompanyProfilesTable extends CompanyProfiles
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       )!,
+      invoiceNumberFormat: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}invoice_number_format'],
+      )!,
+      lastInvoiceSequence: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_invoice_sequence'],
+      )!,
+      lastInvoiceSequenceYear: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_invoice_sequence_year'],
+      )!,
       logoPath: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}logo_path'],
@@ -268,6 +345,9 @@ class CompanyProfile extends DataClass implements Insertable<CompanyProfile> {
   final String address;
   final String paymentDetails;
   final String notes;
+  final String invoiceNumberFormat;
+  final int lastInvoiceSequence;
+  final int lastInvoiceSequenceYear;
   final String? logoPath;
   final DateTime updatedAt;
   const CompanyProfile({
@@ -279,6 +359,9 @@ class CompanyProfile extends DataClass implements Insertable<CompanyProfile> {
     required this.address,
     required this.paymentDetails,
     required this.notes,
+    required this.invoiceNumberFormat,
+    required this.lastInvoiceSequence,
+    required this.lastInvoiceSequenceYear,
     this.logoPath,
     required this.updatedAt,
   });
@@ -293,6 +376,9 @@ class CompanyProfile extends DataClass implements Insertable<CompanyProfile> {
     map['address'] = Variable<String>(address);
     map['payment_details'] = Variable<String>(paymentDetails);
     map['notes'] = Variable<String>(notes);
+    map['invoice_number_format'] = Variable<String>(invoiceNumberFormat);
+    map['last_invoice_sequence'] = Variable<int>(lastInvoiceSequence);
+    map['last_invoice_sequence_year'] = Variable<int>(lastInvoiceSequenceYear);
     if (!nullToAbsent || logoPath != null) {
       map['logo_path'] = Variable<String>(logoPath);
     }
@@ -310,6 +396,9 @@ class CompanyProfile extends DataClass implements Insertable<CompanyProfile> {
       address: Value(address),
       paymentDetails: Value(paymentDetails),
       notes: Value(notes),
+      invoiceNumberFormat: Value(invoiceNumberFormat),
+      lastInvoiceSequence: Value(lastInvoiceSequence),
+      lastInvoiceSequenceYear: Value(lastInvoiceSequenceYear),
       logoPath: logoPath == null && nullToAbsent
           ? const Value.absent()
           : Value(logoPath),
@@ -331,6 +420,15 @@ class CompanyProfile extends DataClass implements Insertable<CompanyProfile> {
       address: serializer.fromJson<String>(json['address']),
       paymentDetails: serializer.fromJson<String>(json['paymentDetails']),
       notes: serializer.fromJson<String>(json['notes']),
+      invoiceNumberFormat: serializer.fromJson<String>(
+        json['invoiceNumberFormat'],
+      ),
+      lastInvoiceSequence: serializer.fromJson<int>(
+        json['lastInvoiceSequence'],
+      ),
+      lastInvoiceSequenceYear: serializer.fromJson<int>(
+        json['lastInvoiceSequenceYear'],
+      ),
       logoPath: serializer.fromJson<String?>(json['logoPath']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -347,6 +445,11 @@ class CompanyProfile extends DataClass implements Insertable<CompanyProfile> {
       'address': serializer.toJson<String>(address),
       'paymentDetails': serializer.toJson<String>(paymentDetails),
       'notes': serializer.toJson<String>(notes),
+      'invoiceNumberFormat': serializer.toJson<String>(invoiceNumberFormat),
+      'lastInvoiceSequence': serializer.toJson<int>(lastInvoiceSequence),
+      'lastInvoiceSequenceYear': serializer.toJson<int>(
+        lastInvoiceSequenceYear,
+      ),
       'logoPath': serializer.toJson<String?>(logoPath),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -361,6 +464,9 @@ class CompanyProfile extends DataClass implements Insertable<CompanyProfile> {
     String? address,
     String? paymentDetails,
     String? notes,
+    String? invoiceNumberFormat,
+    int? lastInvoiceSequence,
+    int? lastInvoiceSequenceYear,
     Value<String?> logoPath = const Value.absent(),
     DateTime? updatedAt,
   }) => CompanyProfile(
@@ -372,6 +478,10 @@ class CompanyProfile extends DataClass implements Insertable<CompanyProfile> {
     address: address ?? this.address,
     paymentDetails: paymentDetails ?? this.paymentDetails,
     notes: notes ?? this.notes,
+    invoiceNumberFormat: invoiceNumberFormat ?? this.invoiceNumberFormat,
+    lastInvoiceSequence: lastInvoiceSequence ?? this.lastInvoiceSequence,
+    lastInvoiceSequenceYear:
+        lastInvoiceSequenceYear ?? this.lastInvoiceSequenceYear,
     logoPath: logoPath.present ? logoPath.value : this.logoPath,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -387,6 +497,15 @@ class CompanyProfile extends DataClass implements Insertable<CompanyProfile> {
           ? data.paymentDetails.value
           : this.paymentDetails,
       notes: data.notes.present ? data.notes.value : this.notes,
+      invoiceNumberFormat: data.invoiceNumberFormat.present
+          ? data.invoiceNumberFormat.value
+          : this.invoiceNumberFormat,
+      lastInvoiceSequence: data.lastInvoiceSequence.present
+          ? data.lastInvoiceSequence.value
+          : this.lastInvoiceSequence,
+      lastInvoiceSequenceYear: data.lastInvoiceSequenceYear.present
+          ? data.lastInvoiceSequenceYear.value
+          : this.lastInvoiceSequenceYear,
       logoPath: data.logoPath.present ? data.logoPath.value : this.logoPath,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -403,6 +522,9 @@ class CompanyProfile extends DataClass implements Insertable<CompanyProfile> {
           ..write('address: $address, ')
           ..write('paymentDetails: $paymentDetails, ')
           ..write('notes: $notes, ')
+          ..write('invoiceNumberFormat: $invoiceNumberFormat, ')
+          ..write('lastInvoiceSequence: $lastInvoiceSequence, ')
+          ..write('lastInvoiceSequenceYear: $lastInvoiceSequenceYear, ')
           ..write('logoPath: $logoPath, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -419,6 +541,9 @@ class CompanyProfile extends DataClass implements Insertable<CompanyProfile> {
     address,
     paymentDetails,
     notes,
+    invoiceNumberFormat,
+    lastInvoiceSequence,
+    lastInvoiceSequenceYear,
     logoPath,
     updatedAt,
   );
@@ -434,6 +559,9 @@ class CompanyProfile extends DataClass implements Insertable<CompanyProfile> {
           other.address == this.address &&
           other.paymentDetails == this.paymentDetails &&
           other.notes == this.notes &&
+          other.invoiceNumberFormat == this.invoiceNumberFormat &&
+          other.lastInvoiceSequence == this.lastInvoiceSequence &&
+          other.lastInvoiceSequenceYear == this.lastInvoiceSequenceYear &&
           other.logoPath == this.logoPath &&
           other.updatedAt == this.updatedAt);
 }
@@ -447,6 +575,9 @@ class CompanyProfilesCompanion extends UpdateCompanion<CompanyProfile> {
   final Value<String> address;
   final Value<String> paymentDetails;
   final Value<String> notes;
+  final Value<String> invoiceNumberFormat;
+  final Value<int> lastInvoiceSequence;
+  final Value<int> lastInvoiceSequenceYear;
   final Value<String?> logoPath;
   final Value<DateTime> updatedAt;
   const CompanyProfilesCompanion({
@@ -458,6 +589,9 @@ class CompanyProfilesCompanion extends UpdateCompanion<CompanyProfile> {
     this.address = const Value.absent(),
     this.paymentDetails = const Value.absent(),
     this.notes = const Value.absent(),
+    this.invoiceNumberFormat = const Value.absent(),
+    this.lastInvoiceSequence = const Value.absent(),
+    this.lastInvoiceSequenceYear = const Value.absent(),
     this.logoPath = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -470,6 +604,9 @@ class CompanyProfilesCompanion extends UpdateCompanion<CompanyProfile> {
     this.address = const Value.absent(),
     this.paymentDetails = const Value.absent(),
     this.notes = const Value.absent(),
+    this.invoiceNumberFormat = const Value.absent(),
+    this.lastInvoiceSequence = const Value.absent(),
+    this.lastInvoiceSequenceYear = const Value.absent(),
     this.logoPath = const Value.absent(),
     required DateTime updatedAt,
   }) : updatedAt = Value(updatedAt);
@@ -482,6 +619,9 @@ class CompanyProfilesCompanion extends UpdateCompanion<CompanyProfile> {
     Expression<String>? address,
     Expression<String>? paymentDetails,
     Expression<String>? notes,
+    Expression<String>? invoiceNumberFormat,
+    Expression<int>? lastInvoiceSequence,
+    Expression<int>? lastInvoiceSequenceYear,
     Expression<String>? logoPath,
     Expression<DateTime>? updatedAt,
   }) {
@@ -494,6 +634,12 @@ class CompanyProfilesCompanion extends UpdateCompanion<CompanyProfile> {
       if (address != null) 'address': address,
       if (paymentDetails != null) 'payment_details': paymentDetails,
       if (notes != null) 'notes': notes,
+      if (invoiceNumberFormat != null)
+        'invoice_number_format': invoiceNumberFormat,
+      if (lastInvoiceSequence != null)
+        'last_invoice_sequence': lastInvoiceSequence,
+      if (lastInvoiceSequenceYear != null)
+        'last_invoice_sequence_year': lastInvoiceSequenceYear,
       if (logoPath != null) 'logo_path': logoPath,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -508,6 +654,9 @@ class CompanyProfilesCompanion extends UpdateCompanion<CompanyProfile> {
     Value<String>? address,
     Value<String>? paymentDetails,
     Value<String>? notes,
+    Value<String>? invoiceNumberFormat,
+    Value<int>? lastInvoiceSequence,
+    Value<int>? lastInvoiceSequenceYear,
     Value<String?>? logoPath,
     Value<DateTime>? updatedAt,
   }) {
@@ -520,6 +669,10 @@ class CompanyProfilesCompanion extends UpdateCompanion<CompanyProfile> {
       address: address ?? this.address,
       paymentDetails: paymentDetails ?? this.paymentDetails,
       notes: notes ?? this.notes,
+      invoiceNumberFormat: invoiceNumberFormat ?? this.invoiceNumberFormat,
+      lastInvoiceSequence: lastInvoiceSequence ?? this.lastInvoiceSequence,
+      lastInvoiceSequenceYear:
+          lastInvoiceSequenceYear ?? this.lastInvoiceSequenceYear,
       logoPath: logoPath ?? this.logoPath,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -552,6 +705,19 @@ class CompanyProfilesCompanion extends UpdateCompanion<CompanyProfile> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (invoiceNumberFormat.present) {
+      map['invoice_number_format'] = Variable<String>(
+        invoiceNumberFormat.value,
+      );
+    }
+    if (lastInvoiceSequence.present) {
+      map['last_invoice_sequence'] = Variable<int>(lastInvoiceSequence.value);
+    }
+    if (lastInvoiceSequenceYear.present) {
+      map['last_invoice_sequence_year'] = Variable<int>(
+        lastInvoiceSequenceYear.value,
+      );
+    }
     if (logoPath.present) {
       map['logo_path'] = Variable<String>(logoPath.value);
     }
@@ -572,6 +738,9 @@ class CompanyProfilesCompanion extends UpdateCompanion<CompanyProfile> {
           ..write('address: $address, ')
           ..write('paymentDetails: $paymentDetails, ')
           ..write('notes: $notes, ')
+          ..write('invoiceNumberFormat: $invoiceNumberFormat, ')
+          ..write('lastInvoiceSequence: $lastInvoiceSequence, ')
+          ..write('lastInvoiceSequenceYear: $lastInvoiceSequenceYear, ')
           ..write('logoPath: $logoPath, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -2876,6 +3045,9 @@ typedef $$CompanyProfilesTableCreateCompanionBuilder =
       Value<String> address,
       Value<String> paymentDetails,
       Value<String> notes,
+      Value<String> invoiceNumberFormat,
+      Value<int> lastInvoiceSequence,
+      Value<int> lastInvoiceSequenceYear,
       Value<String?> logoPath,
       required DateTime updatedAt,
     });
@@ -2889,6 +3061,9 @@ typedef $$CompanyProfilesTableUpdateCompanionBuilder =
       Value<String> address,
       Value<String> paymentDetails,
       Value<String> notes,
+      Value<String> invoiceNumberFormat,
+      Value<int> lastInvoiceSequence,
+      Value<int> lastInvoiceSequenceYear,
       Value<String?> logoPath,
       Value<DateTime> updatedAt,
     });
@@ -2939,6 +3114,21 @@ class $$CompanyProfilesTableFilterComposer
 
   ColumnFilters<String> get notes => $composableBuilder(
     column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get invoiceNumberFormat => $composableBuilder(
+    column: $table.invoiceNumberFormat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastInvoiceSequence => $composableBuilder(
+    column: $table.lastInvoiceSequence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastInvoiceSequenceYear => $composableBuilder(
+    column: $table.lastInvoiceSequenceYear,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3002,6 +3192,21 @@ class $$CompanyProfilesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get invoiceNumberFormat => $composableBuilder(
+    column: $table.invoiceNumberFormat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastInvoiceSequence => $composableBuilder(
+    column: $table.lastInvoiceSequence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastInvoiceSequenceYear => $composableBuilder(
+    column: $table.lastInvoiceSequenceYear,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get logoPath => $composableBuilder(
     column: $table.logoPath,
     builder: (column) => ColumnOrderings(column),
@@ -3047,6 +3252,21 @@ class $$CompanyProfilesTableAnnotationComposer
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get invoiceNumberFormat => $composableBuilder(
+    column: $table.invoiceNumberFormat,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lastInvoiceSequence => $composableBuilder(
+    column: $table.lastInvoiceSequence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lastInvoiceSequenceYear => $composableBuilder(
+    column: $table.lastInvoiceSequenceYear,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get logoPath =>
       $composableBuilder(column: $table.logoPath, builder: (column) => column);
@@ -3100,6 +3320,9 @@ class $$CompanyProfilesTableTableManager
                 Value<String> address = const Value.absent(),
                 Value<String> paymentDetails = const Value.absent(),
                 Value<String> notes = const Value.absent(),
+                Value<String> invoiceNumberFormat = const Value.absent(),
+                Value<int> lastInvoiceSequence = const Value.absent(),
+                Value<int> lastInvoiceSequenceYear = const Value.absent(),
                 Value<String?> logoPath = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => CompanyProfilesCompanion(
@@ -3111,6 +3334,9 @@ class $$CompanyProfilesTableTableManager
                 address: address,
                 paymentDetails: paymentDetails,
                 notes: notes,
+                invoiceNumberFormat: invoiceNumberFormat,
+                lastInvoiceSequence: lastInvoiceSequence,
+                lastInvoiceSequenceYear: lastInvoiceSequenceYear,
                 logoPath: logoPath,
                 updatedAt: updatedAt,
               ),
@@ -3124,6 +3350,9 @@ class $$CompanyProfilesTableTableManager
                 Value<String> address = const Value.absent(),
                 Value<String> paymentDetails = const Value.absent(),
                 Value<String> notes = const Value.absent(),
+                Value<String> invoiceNumberFormat = const Value.absent(),
+                Value<int> lastInvoiceSequence = const Value.absent(),
+                Value<int> lastInvoiceSequenceYear = const Value.absent(),
                 Value<String?> logoPath = const Value.absent(),
                 required DateTime updatedAt,
               }) => CompanyProfilesCompanion.insert(
@@ -3135,6 +3364,9 @@ class $$CompanyProfilesTableTableManager
                 address: address,
                 paymentDetails: paymentDetails,
                 notes: notes,
+                invoiceNumberFormat: invoiceNumberFormat,
+                lastInvoiceSequence: lastInvoiceSequence,
+                lastInvoiceSequenceYear: lastInvoiceSequenceYear,
                 logoPath: logoPath,
                 updatedAt: updatedAt,
               ),

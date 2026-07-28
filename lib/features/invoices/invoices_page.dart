@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:invoices/data/app_database.dart';
+import 'package:invoices/data/invoice_number_format.dart';
 import 'package:invoices/data/media_store.dart';
 import 'package:invoices/features/invoices/invoice_pdf.dart';
 import 'package:invoices/features/invoices/invoice_pdf_preview_page.dart';
@@ -429,12 +430,19 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
       return;
     }
 
-    final number = await widget.database.nextInvoiceNumber(picked);
+    final company = await widget.database.getCompany();
+    final number = await widget.database.nextInvoiceNumber(
+      picked,
+      company: company,
+    );
     if (!mounted) {
       return;
     }
     final current = _number.text.trim();
-    final looksAuto = RegExp(r'^INV-\d{4}-\d{3}$').hasMatch(current);
+    final looksAuto = matchesInvoiceNumberFormat(
+      current,
+      company.invoiceNumberFormat,
+    );
     if (looksAuto || current.isEmpty) {
       setState(() => _number.text = number);
     }

@@ -159,6 +159,12 @@
     "company_field_address": "Adrese",
     "company_field_payment": "Maksājuma / bankas dati",
     "company_field_notes": "Kontaktpiezīmes",
+    "company_field_invoice_number_format": "Rēķina numura formāts",
+    "company_field_invoice_number_format_hint":
+        "Izmantojiet {number} un {YEAR}. Noklusējums {number}/{YEAR} veido 1/2026. Secība katru gadu sākas no jauna.",
+    "company_field_last_invoice_number": "Pēdējais rēķina numurs",
+    "company_field_last_invoice_number_hint":
+        "Iestatiet pēdējo numuru, ko jau izmantojāt šogad. Nākamais rēķins izmanto šo vērtību + 1.",
     "company_save": "Saglabāt uzņēmumu",
     "company_saved": "Uzņēmums saglabāts",
     "company_save_failed": "Neizdevās saglabāt uzņēmumu",

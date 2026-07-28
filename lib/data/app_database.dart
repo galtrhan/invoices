@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 
 import 'package:invoices/config/app_config.dart';
+import 'package:invoices/data/invoice_number_format.dart';
 
 part 'app_database.g.dart';
 
@@ -16,6 +17,12 @@ class CompanyProfiles extends Table {
   TextColumn get address => text().withDefault(const Constant(''))();
   TextColumn get paymentDetails => text().withDefault(const Constant(''))();
   TextColumn get notes => text().withDefault(const Constant(''))();
+  TextColumn get invoiceNumberFormat => text()
+      .withDefault(const Constant(defaultInvoiceNumberFormat))();
+  IntColumn get lastInvoiceSequence =>
+      integer().withDefault(const Constant(0))();
+  IntColumn get lastInvoiceSequenceYear =>
+      integer().withDefault(const Constant(0))();
   TextColumn get logoPath => text().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
 
@@ -105,11 +112,14 @@ class AppDatabase extends _$AppDatabase {
     address: '',
     paymentDetails: '',
     notes: '',
+    invoiceNumberFormat: defaultInvoiceNumberFormat,
+    lastInvoiceSequence: 0,
+    lastInvoiceSequenceYear: 0,
     updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
   );
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration {
@@ -125,6 +135,22 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 4) {
           await m.addColumn(clients, clients.pdfTemplate);
+        }
+        if (from < 5) {
+          await m.addColumn(
+            companyProfiles,
+            companyProfiles.invoiceNumberFormat,
+          );
+        }
+        if (from < 6) {
+          await m.addColumn(
+            companyProfiles,
+            companyProfiles.lastInvoiceSequence,
+          );
+          await m.addColumn(
+            companyProfiles,
+            companyProfiles.lastInvoiceSequenceYear,
+          );
         }
       },
     );
@@ -210,21 +236,47 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
-  Future<String> nextInvoiceNumber(DateTime issuedOn) async {
+  Future<String> nextInvoiceNumber(
+    DateTime issuedOn, {
+    CompanyProfile? company,
+  }) async {
     final year = issuedOn.year;
-    final start = DateTime(year);
-    final end = DateTime(year + 1);
-    final countExpr = invoices.id.count();
-    final count = await (selectOnly(invoices)
-          ..addColumns([countExpr])
-          ..where(
-            invoices.issuedOn.isBiggerOrEqualValue(start) &
-                invoices.issuedOn.isSmallerThanValue(end),
-          ))
-        .map((row) => row.read(countExpr)!)
-        .getSingle();
-    final seq = (count + 1).toString().padLeft(3, '0');
-    return 'INV-$year-$seq';
+    final profile = company ?? await getCompany();
+    final last = lastInvoiceSequenceForYear(
+      lastSequence: profile.lastInvoiceSequence,
+      lastSequenceYear: profile.lastInvoiceSequenceYear,
+      year: year,
+    );
+    return formatInvoiceNumber(
+      profile.invoiceNumberFormat,
+      number: last + 1,
+      year: year,
+    );
+  }
+
+  Future<void> noteInvoiceNumberUsed(String number, DateTime issuedOn) async {
+    final company = await getCompany();
+    final sequence = parseInvoiceSequence(number, company.invoiceNumberFormat);
+    if (sequence == null) {
+      return;
+    }
+    final year = issuedOn.year;
+    final last = lastInvoiceSequenceForYear(
+      lastSequence: company.lastInvoiceSequence,
+      lastSequenceYear: company.lastInvoiceSequenceYear,
+      year: year,
+    );
+    if (sequence <= last) {
+      return;
+    }
+    await into(companyProfiles).insertOnConflictUpdate(
+      CompanyProfilesCompanion(
+        id: const Value(companyRowId),
+        lastInvoiceSequence: Value(sequence),
+        lastInvoiceSequenceYear: Value(year),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   Future<Invoice> saveInvoice({
@@ -273,6 +325,7 @@ class AppDatabase extends _$AppDatabase {
         ]);
       });
 
+      await noteInvoiceNumberUsed(invoice.number, invoice.issuedOn);
       return invoice;
     });
   }
