@@ -70,6 +70,28 @@ class LocalizationDefinition {
   String get invoicesSectionHistoryBody => _('invoices_section_history_body');
   String get invoicesSave => _('invoices_save');
   String get invoicesPreview => _('invoices_preview');
+  String get invoicesFieldNumber => _('invoices_field_number');
+  String get invoicesFieldIssued => _('invoices_field_issued');
+  String get invoicesFieldDescription => _('invoices_field_description');
+  String get invoicesFieldQuantity => _('invoices_field_quantity');
+  String get invoicesFieldUnitPrice => _('invoices_field_unit_price');
+  String get invoicesFieldTotal => _('invoices_field_total');
+  String get invoicesClientPlaceholder => _('invoices_client_placeholder');
+  String get invoicesNoClients => _('invoices_no_clients');
+  String get invoicesClientRequired => _('invoices_client_required');
+  String get invoicesInvalidAmount => _('invoices_invalid_amount');
+  String get invoicesCompanyEmpty => _('invoices_company_empty');
+  String get invoicesCreated => _('invoices_created');
+  String get invoicesSaved => _('invoices_saved');
+  String get invoicesSaveFailed => _('invoices_save_failed');
+  String get invoicesLoadFailed => _('invoices_load_failed');
+  String get invoicesDelete => _('invoices_delete');
+  String get invoicesDeleteConfirmTitle => _('invoices_delete_confirm_title');
+  String get invoicesDeleteConfirmBody => _('invoices_delete_confirm_body');
+  String get invoicesDeleteConfirmAction => _('invoices_delete_confirm_action');
+  String get invoicesDeleted => _('invoices_deleted');
+  String get invoicesDeleteFailed => _('invoices_delete_failed');
+  String get invoicesRemoveJobLine => _('invoices_remove_job_line');
 
   // Clients
   String get clientsTitle => _('clients_title');
@@ -144,12 +166,12 @@ class LocalizationDefinition {
       'settings_language': 'Language',
       'settings_data': 'Data',
       'settings_reset_body':
-          'Delete clients, company details, and logos. '
+          'Delete invoices, clients, company details, and logos. '
           'Theme and language stay the same.',
       'settings_reset_button': 'Delete all data',
       'settings_reset_confirm_title': 'Delete all data?',
       'settings_reset_confirm_body':
-          'This removes clients, company details, and stored logos. '
+          'This removes invoices, clients, company details, and stored logos. '
           'You cannot undo this action. Preferences stay unchanged.',
       'settings_reset_confirm_action': 'Delete',
       'settings_cancel': 'Cancel',
@@ -198,6 +220,30 @@ class LocalizationDefinition {
           'When regenerating: default = as saved at invoice time. Optional = use current client/company data.',
       'invoices_save': 'Save invoice',
       'invoices_preview': 'Preview',
+      'invoices_field_number': 'Invoice number',
+      'invoices_field_issued': 'Issue date',
+      'invoices_field_description': 'Description',
+      'invoices_field_quantity': 'Quantity',
+      'invoices_field_unit_price': 'Unit price',
+      'invoices_field_total': 'Total',
+      'invoices_client_placeholder': 'Select a client',
+      'invoices_no_clients': 'Add a client before you create an invoice.',
+      'invoices_client_required': 'Select a client before you save.',
+      'invoices_invalid_amount':
+          'Enter valid numbers for quantity and unit price.',
+      'invoices_company_empty': 'No company details yet. Set them in Company.',
+      'invoices_created': 'Invoice created',
+      'invoices_saved': 'Invoice saved',
+      'invoices_save_failed': 'Could not save invoice',
+      'invoices_load_failed': 'Could not load invoices',
+      'invoices_delete': 'Delete invoice',
+      'invoices_delete_confirm_title': 'Delete this invoice?',
+      'invoices_delete_confirm_body':
+          'This removes the invoice and its job lines. You cannot undo this action.',
+      'invoices_delete_confirm_action': 'Delete',
+      'invoices_deleted': 'Invoice deleted',
+      'invoices_delete_failed': 'Could not delete invoice',
+      'invoices_remove_job_line': 'Remove',
       'clients_title': 'Clients',
       'clients_subtitle': 'Invoice parties with contact details and logo',
       'clients_new': 'New client',

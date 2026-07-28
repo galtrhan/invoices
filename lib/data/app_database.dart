@@ -36,7 +36,58 @@ class Clients extends Table {
   DateTimeColumn get updatedAt => dateTime()();
 }
 
-@DriftDatabase(tables: [CompanyProfiles, Clients])
+class Invoices extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get number => text()();
+  DateTimeColumn get issuedOn => dateTime()();
+  IntColumn get clientId => integer().nullable()();
+  TextColumn get clientName => text().withDefault(const Constant(''))();
+  TextColumn get clientEmail => text().withDefault(const Constant(''))();
+  TextColumn get clientPhone => text().withDefault(const Constant(''))();
+  TextColumn get clientTaxId => text().withDefault(const Constant(''))();
+  TextColumn get clientAddress => text().withDefault(const Constant(''))();
+  TextColumn get clientNotes => text().withDefault(const Constant(''))();
+  TextColumn get clientLogoPath => text().nullable()();
+  TextColumn get companyName => text().withDefault(const Constant(''))();
+  TextColumn get companyEmail => text().withDefault(const Constant(''))();
+  TextColumn get companyPhone => text().withDefault(const Constant(''))();
+  TextColumn get companyTaxId => text().withDefault(const Constant(''))();
+  TextColumn get companyAddress => text().withDefault(const Constant(''))();
+  TextColumn get companyPaymentDetails =>
+      text().withDefault(const Constant(''))();
+  TextColumn get companyNotes => text().withDefault(const Constant(''))();
+  TextColumn get companyLogoPath => text().nullable()();
+  RealColumn get total => real().withDefault(const Constant(0.0))();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+}
+
+class InvoiceLines extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get invoiceId => integer().references(
+        Invoices,
+        #id,
+        onDelete: KeyAction.cascade,
+      )();
+  TextColumn get description => text().withDefault(const Constant(''))();
+  RealColumn get quantity => real().withDefault(const Constant(1.0))();
+  RealColumn get unitPrice => real().withDefault(const Constant(0.0))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+}
+
+class InvoiceLineInput {
+  const InvoiceLineInput({
+    required this.description,
+    required this.quantity,
+    required this.unitPrice,
+  });
+
+  final String description;
+  final double quantity;
+  final double unitPrice;
+}
+
+@DriftDatabase(tables: [CompanyProfiles, Clients, Invoices, InvoiceLines])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -57,7 +108,7 @@ class AppDatabase extends _$AppDatabase {
   );
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -66,6 +117,10 @@ class AppDatabase extends _$AppDatabase {
       onUpgrade: (Migrator m, int from, int to) async {
         if (from < 2) {
           await m.createTable(clients);
+        }
+        if (from < 3) {
+          await m.createTable(invoices);
+          await m.createTable(invoiceLines);
         }
       },
     );
@@ -130,8 +185,102 @@ class AppDatabase extends _$AppDatabase {
     return (delete(clients)..where((row) => row.id.equals(id))).go();
   }
 
+  Stream<List<Invoice>> watchInvoices() {
+    return (select(invoices)
+          ..orderBy([
+            (row) => OrderingTerm.desc(row.issuedOn),
+            (row) => OrderingTerm.desc(row.id),
+          ]))
+        .watch();
+  }
+
+  Future<Invoice?> getInvoice(int id) {
+    return (select(invoices)..where((row) => row.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Future<List<InvoiceLine>> getInvoiceLines(int invoiceId) {
+    return (select(invoiceLines)
+          ..where((row) => row.invoiceId.equals(invoiceId))
+          ..orderBy([(row) => OrderingTerm.asc(row.sortOrder)]))
+        .get();
+  }
+
+  Future<String> nextInvoiceNumber(DateTime issuedOn) async {
+    final year = issuedOn.year;
+    final start = DateTime(year);
+    final end = DateTime(year + 1);
+    final countExpr = invoices.id.count();
+    final count = await (selectOnly(invoices)
+          ..addColumns([countExpr])
+          ..where(
+            invoices.issuedOn.isBiggerOrEqualValue(start) &
+                invoices.issuedOn.isSmallerThanValue(end),
+          ))
+        .map((row) => row.read(countExpr)!)
+        .getSingle();
+    final seq = (count + 1).toString().padLeft(3, '0');
+    return 'INV-$year-$seq';
+  }
+
+  Future<Invoice> saveInvoice({
+    int? id,
+    required InvoicesCompanion data,
+    required List<InvoiceLineInput> lines,
+  }) {
+    return transaction(() async {
+      final now = DateTime.now();
+      final total = lines.fold<double>(
+        0,
+        (sum, line) => sum + (line.quantity * line.unitPrice),
+      );
+      final withTotal = data.copyWith(total: Value(total));
+
+      final Invoice invoice;
+      if (id == null) {
+        invoice = await into(invoices).insertReturning(
+          withTotal.copyWith(
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
+      } else {
+        final rows = await (update(invoices)
+              ..where((row) => row.id.equals(id)))
+            .writeReturning(
+          withTotal.copyWith(updatedAt: Value(now)),
+        );
+        invoice = rows.single;
+        await (delete(invoiceLines)
+              ..where((row) => row.invoiceId.equals(id)))
+            .go();
+      }
+
+      await batch((b) {
+        b.insertAll(invoiceLines, [
+          for (var i = 0; i < lines.length; i++)
+            InvoiceLinesCompanion.insert(
+              invoiceId: invoice.id,
+              description: Value(lines[i].description),
+              quantity: Value(lines[i].quantity),
+              unitPrice: Value(lines[i].unitPrice),
+              sortOrder: Value(i),
+            ),
+        ]);
+      });
+
+      return invoice;
+    });
+  }
+
+  Future<void> deleteInvoice(int id) {
+    return (delete(invoices)..where((row) => row.id.equals(id))).go();
+  }
+
   Future<void> clearAllData() {
     return transaction(() async {
+      await delete(invoiceLines).go();
+      await delete(invoices).go();
       await delete(clients).go();
       await delete(companyProfiles).go();
     });

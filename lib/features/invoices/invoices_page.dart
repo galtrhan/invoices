@@ -1,11 +1,36 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:drift/drift.dart' show Value;
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'package:invoices/data/app_database.dart';
 import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/widgets/master_detail.dart';
 import 'package:invoices/widgets/page_chrome.dart';
 
+String _formatDate(DateTime date) {
+  final y = date.year.toString().padLeft(4, '0');
+  final m = date.month.toString().padLeft(2, '0');
+  final d = date.day.toString().padLeft(2, '0');
+  return '$y-$m-$d';
+}
+
+String _formatMoney(double value) => value.toStringAsFixed(2);
+
+/// Returns null when [raw] is not empty and not a number.
+double? _tryParseAmount(String raw) {
+  final normalized = raw.trim().replaceAll(',', '.');
+  if (normalized.isEmpty) {
+    return 0;
+  }
+  return double.tryParse(normalized);
+}
+
 class InvoicesPage extends StatefulWidget {
-  const InvoicesPage({super.key});
+  const InvoicesPage({super.key, required this.database});
+
+  final AppDatabase database;
 
   @override
   State<InvoicesPage> createState() => _InvoicesPageState();
@@ -13,9 +38,21 @@ class InvoicesPage extends StatefulWidget {
 
 class _InvoicesPageState extends State<InvoicesPage> {
   _Detail _detail = const _Detail.empty();
-  final List<_InvoiceDraft> _invoices = [];
+  late Stream<List<Invoice>> _invoicesStream = widget.database.watchInvoices();
+
+  @override
+  void didUpdateWidget(covariant InvoicesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.database, widget.database)) {
+      _invoicesStream = widget.database.watchInvoices();
+    }
+  }
 
   void _startCreate() => setState(() => _detail = const _Detail.create());
+
+  void _select(Invoice invoice) {
+    setState(() => _detail = _Detail.selected(invoice.id));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,27 +73,58 @@ class _InvoicesPageState extends State<InvoicesPage> {
           ],
         ),
         Expanded(
-          child: MasterDetail(
-            master: _InvoiceList(
-              invoices: _invoices,
-              selectedId: switch (_detail) {
-                _Selected(:final invoice) => invoice.id,
+          child: StreamBuilder<List<Invoice>>(
+            stream: _invoicesStream,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return EmptyPane(
+                  title: l10n.invoicesLoadFailed,
+                  message: l10n.invoicesLoadFailed,
+                );
+              }
+
+              final invoices = snapshot.data ?? const <Invoice>[];
+              final selectedId = switch (_detail) {
+                _Selected(:final id) => id,
                 _ => null,
-              },
-              onSelect: (invoice) {
-                setState(() => _detail = _Detail.selected(invoice));
-              },
-              onCreate: _startCreate,
-            ),
-            detail: switch (_detail) {
-              _Create() => const _InvoiceEditor.create(),
-              _Selected(:final invoice) => _InvoiceEditor.view(invoice),
-              _Empty() => EmptyPane(
-                title: l10n.invoicesNoneSelectedTitle,
-                message: l10n.invoicesNoneSelectedMessage,
-                actionLabel: l10n.invoicesNew,
-                onAction: _startCreate,
-              ),
+              };
+              final selected = selectedId == null
+                  ? null
+                  : invoices.where((row) => row.id == selectedId).firstOrNull;
+
+              return MasterDetail(
+                master: _InvoiceList(
+                  invoices: invoices,
+                  selectedId: selectedId,
+                  onSelect: _select,
+                  onCreate: _startCreate,
+                ),
+                detail: switch (_detail) {
+                  _Create() => _InvoiceEditor(
+                      key: const ValueKey('new'),
+                      database: widget.database,
+                      invoice: null,
+                      onSaved: _select,
+                    ),
+                  _Selected() when selected != null => _InvoiceEditor(
+                      key: ValueKey(selected.id),
+                      database: widget.database,
+                      invoice: selected,
+                      onSaved: _select,
+                      onDeleted: () =>
+                          setState(() => _detail = const _Detail.empty()),
+                    ),
+                  _Selected() => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  _Empty() => EmptyPane(
+                      title: l10n.invoicesNoneSelectedTitle,
+                      message: l10n.invoicesNoneSelectedMessage,
+                      actionLabel: l10n.invoicesNew,
+                      onAction: _startCreate,
+                    ),
+                },
+              );
             },
           ),
         ),
@@ -69,7 +137,7 @@ sealed class _Detail {
   const _Detail();
   const factory _Detail.empty() = _Empty;
   const factory _Detail.create() = _Create;
-  const factory _Detail.selected(_InvoiceDraft invoice) = _Selected;
+  const factory _Detail.selected(int id) = _Selected;
 }
 
 final class _Empty extends _Detail {
@@ -81,24 +149,8 @@ final class _Create extends _Detail {
 }
 
 final class _Selected extends _Detail {
-  const _Selected(this.invoice);
-  final _InvoiceDraft invoice;
-}
-
-class _InvoiceDraft {
-  const _InvoiceDraft({
-    required this.id,
-    required this.number,
-    required this.clientName,
-    required this.issuedOn,
-    required this.totalLabel,
-  });
-
-  final String id;
-  final String number;
-  final String clientName;
-  final String issuedOn;
-  final String totalLabel;
+  const _Selected(this.id);
+  final int id;
 }
 
 class _InvoiceList extends StatelessWidget {
@@ -109,9 +161,9 @@ class _InvoiceList extends StatelessWidget {
     required this.onCreate,
   });
 
-  final List<_InvoiceDraft> invoices;
-  final String? selectedId;
-  final ValueChanged<_InvoiceDraft> onSelect;
+  final List<Invoice> invoices;
+  final int? selectedId;
+  final ValueChanged<Invoice> onSelect;
   final VoidCallback onCreate;
 
   @override
@@ -132,13 +184,16 @@ class _InvoiceList extends StatelessWidget {
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final invoice = invoices[index];
+        final clientLabel = invoice.clientName.isEmpty
+            ? l10n.invoicesClientPlaceholder
+            : invoice.clientName;
         return ListTile(
           selected: invoice.id == selectedId,
           selectedTileColor: Theme.of(context).colorScheme.primaryContainer,
           title: Text(invoice.number),
-          subtitle: Text('${invoice.clientName} · ${invoice.issuedOn}'),
+          subtitle: Text('$clientLabel · ${_formatDate(invoice.issuedOn)}'),
           trailing: Text(
-            invoice.totalLabel,
+            _formatMoney(invoice.total),
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           onTap: () => onSelect(invoice),
@@ -148,42 +203,483 @@ class _InvoiceList extends StatelessWidget {
   }
 }
 
-class _InvoiceEditor extends StatelessWidget {
-  const _InvoiceEditor.create() : invoice = null;
-  const _InvoiceEditor.view(this.invoice);
+class _JobLineDraft {
+  _JobLineDraft({
+    String description = '',
+    String quantity = '1',
+    String unitPrice = '0',
+  })  : description = TextEditingController(text: description),
+        quantity = TextEditingController(text: quantity),
+        unitPrice = TextEditingController(text: unitPrice);
 
-  final _InvoiceDraft? invoice;
+  final TextEditingController description;
+  final TextEditingController quantity;
+  final TextEditingController unitPrice;
+
+  double? get lineTotal {
+    final quantity = _tryParseAmount(this.quantity.text);
+    final unitPrice = _tryParseAmount(this.unitPrice.text);
+    if (quantity == null || unitPrice == null) {
+      return null;
+    }
+    return quantity * unitPrice;
+  }
+
+  InvoiceLineInput? toInput() {
+    final quantity = _tryParseAmount(this.quantity.text);
+    final unitPrice = _tryParseAmount(this.unitPrice.text);
+    if (quantity == null || unitPrice == null) {
+      return null;
+    }
+    return InvoiceLineInput(
+      description: description.text.trim(),
+      quantity: quantity,
+      unitPrice: unitPrice,
+    );
+  }
+
+  void dispose() {
+    description.dispose();
+    quantity.dispose();
+    unitPrice.dispose();
+  }
+}
+
+class _InvoiceEditor extends StatefulWidget {
+  const _InvoiceEditor({
+    super.key,
+    required this.database,
+    required this.invoice,
+    required this.onSaved,
+    this.onDeleted,
+  });
+
+  final AppDatabase database;
+  final Invoice? invoice;
+  final ValueChanged<Invoice> onSaved;
+  final VoidCallback? onDeleted;
+
+  @override
+  State<_InvoiceEditor> createState() => _InvoiceEditorState();
+}
+
+class _InvoiceEditorState extends State<_InvoiceEditor> {
+  final _number = TextEditingController();
+  final _lines = <_JobLineDraft>[];
+  late Stream<List<Client>> _clientsStream = widget.database.watchClients();
+  late Stream<CompanyProfile> _companyStream = widget.database.watchCompany();
+
+  DateTime _issuedOn = DateTime.now();
+  int? _clientId;
+  var _loading = true;
+  var _saving = false;
+  var _deleting = false;
+  var _numberReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_bootstrap());
+  }
+
+  @override
+  void didUpdateWidget(covariant _InvoiceEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.database, widget.database)) {
+      _clientsStream = widget.database.watchClients();
+      _companyStream = widget.database.watchCompany();
+    }
+  }
+
+  @override
+  void dispose() {
+    _number.dispose();
+    for (final line in _lines) {
+      line.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _bootstrap() async {
+    final existing = widget.invoice;
+    if (existing == null) {
+      _issuedOn = DateTime.now();
+      _lines.add(_JobLineDraft());
+      final number = await widget.database.nextInvoiceNumber(_issuedOn);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _number.text = number;
+        _numberReady = true;
+        _loading = false;
+      });
+      return;
+    }
+
+    final lines = await widget.database.getInvoiceLines(existing.id);
+    if (!mounted) {
+      return;
+    }
+    for (final line in _lines) {
+      line.dispose();
+    }
+    _lines
+      ..clear()
+      ..addAll(
+        lines.map(
+          (line) => _JobLineDraft(
+            description: line.description,
+            quantity: _formatMoney(line.quantity),
+            unitPrice: _formatMoney(line.unitPrice),
+          ),
+        ),
+      );
+    if (_lines.isEmpty) {
+      _lines.add(_JobLineDraft());
+    }
+    setState(() {
+      _number.text = existing.number;
+      _issuedOn = existing.issuedOn;
+      _clientId = existing.clientId;
+      _numberReady = true;
+      _loading = false;
+    });
+  }
+
+  void _addLine() {
+    setState(() => _lines.add(_JobLineDraft()));
+  }
+
+  void _removeLine(int index) {
+    if (_lines.length <= 1) {
+      return;
+    }
+    setState(() {
+      _lines.removeAt(index).dispose();
+    });
+  }
+
+  double get _total {
+    var sum = 0.0;
+    for (final line in _lines) {
+      sum += line.lineTotal ?? 0;
+    }
+    return sum;
+  }
+
+  Future<void> _pickIssuedOn() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _issuedOn,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+
+    setState(() => _issuedOn = picked);
+
+    if (widget.invoice != null || !_numberReady) {
+      return;
+    }
+
+    final number = await widget.database.nextInvoiceNumber(picked);
+    if (!mounted) {
+      return;
+    }
+    final current = _number.text.trim();
+    final looksAuto = RegExp(r'^INV-\d{4}-\d{3}$').hasMatch(current);
+    if (looksAuto || current.isEmpty) {
+      setState(() => _number.text = number);
+    }
+  }
+
+  Future<void> _save() async {
+    if (_saving) {
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context);
+    final clientId = _clientId;
+    if (clientId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.invoicesClientRequired)),
+      );
+      return;
+    }
+
+    final lineInputs = <InvoiceLineInput>[];
+    for (final line in _lines) {
+      final input = line.toInput();
+      if (input == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.invoicesInvalidAmount)),
+        );
+        return;
+      }
+      lineInputs.add(input);
+    }
+
+    setState(() => _saving = true);
+    final isNew = widget.invoice == null;
+    try {
+      final client = await widget.database.getClient(clientId);
+      if (client == null) {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.invoicesClientRequired)),
+        );
+        return;
+      }
+
+      final company = await widget.database.getCompany();
+      final number = _number.text.trim().isEmpty
+          ? await widget.database.nextInvoiceNumber(_issuedOn)
+          : _number.text.trim();
+
+      final saved = await widget.database.saveInvoice(
+        id: widget.invoice?.id,
+        data: InvoicesCompanion(
+          number: Value(number),
+          issuedOn: Value(_issuedOn),
+          clientId: Value(client.id),
+          clientName: Value(client.name),
+          clientEmail: Value(client.email),
+          clientPhone: Value(client.phone),
+          clientTaxId: Value(client.taxId),
+          clientAddress: Value(client.address),
+          clientNotes: Value(client.notes),
+          clientLogoPath: Value(client.logoPath),
+          companyName: Value(company.name),
+          companyEmail: Value(company.email),
+          companyPhone: Value(company.phone),
+          companyTaxId: Value(company.taxId),
+          companyAddress: Value(company.address),
+          companyPaymentDetails: Value(company.paymentDetails),
+          companyNotes: Value(company.notes),
+          companyLogoPath: Value(company.logoPath),
+        ),
+        lines: lineInputs,
+      );
+
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isNew ? l10n.invoicesCreated : l10n.invoicesSaved),
+        ),
+      );
+      widget.onSaved(saved);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.invoicesSaveFailed)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
+
+  Future<void> _delete() async {
+    final invoice = widget.invoice;
+    if (invoice == null || _deleting) {
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.invoicesDeleteConfirmTitle),
+          content: Text(l10n.invoicesDeleteConfirmBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.settingsCancel),
+            ),
+            FilledButton(
+              style: destructiveFilledStyle(scheme),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.invoicesDeleteConfirmAction),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    setState(() => _deleting = true);
+    try {
+      await widget.database.deleteInvoice(invoice.id);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.invoicesDeleted)),
+      );
+      widget.onDeleted?.call();
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.invoicesDeleteFailed)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _deleting = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
-    final isCreate = invoice == null;
+    final scheme = Theme.of(context).colorScheme;
+    final isNew = widget.invoice == null;
+    final busy = _saving || _deleting || _loading;
+
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return FormPageBody(
       child: Column(
         crossAxisAlignment: .start,
         children: [
           Text(
-            isCreate ? l10n.invoicesEditorNew : invoice!.number,
+            isNew ? l10n.invoicesEditorNew : widget.invoice!.number,
             style: textTheme.headlineMedium,
           ),
           const SizedBox(height: 6),
           Text(
-            isCreate
+            isNew
                 ? l10n.invoicesEditorCreateHint
                 : l10n.invoicesEditorViewHint,
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
+          FieldGrid(
+            children: [
+              TextField(
+                controller: _number,
+                decoration: InputDecoration(
+                  labelText: l10n.invoicesFieldNumber,
+                ),
+              ),
+              InputDecorator(
+                decoration: InputDecoration(
+                  labelText: l10n.invoicesFieldIssued,
+                ),
+                child: InkWell(
+                  onTap: busy ? null : _pickIssuedOn,
+                  child: Padding(
+                    padding: const .symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text(_formatDate(_issuedOn))),
+                        const Icon(Icons.calendar_today_outlined, size: 18),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           SectionPanel(
             title: l10n.invoicesSectionClient,
-            child: Text(l10n.invoicesSectionClientBody),
+            child: Column(
+              crossAxisAlignment: .stretch,
+              children: [
+                Text(l10n.invoicesSectionClientBody),
+                const SizedBox(height: 12),
+                StreamBuilder<List<Client>>(
+                  stream: _clientsStream,
+                  builder: (context, snapshot) {
+                    final clients = snapshot.data ?? const <Client>[];
+                    if (clients.isEmpty) {
+                      return Text(l10n.invoicesNoClients);
+                    }
+
+                    final validIds = clients.map((c) => c.id).toSet();
+                    final value =
+                        _clientId != null && validIds.contains(_clientId)
+                            ? _clientId
+                            : null;
+
+                    return DropdownButtonFormField<int>(
+                      initialValue: value,
+                      decoration: InputDecoration(
+                        labelText: l10n.invoicesSectionClient,
+                      ),
+                      items: [
+                        for (final client in clients)
+                          DropdownMenuItem(
+                            value: client.id,
+                            child: Text(
+                              client.name.isEmpty
+                                  ? l10n.clientsEditorNew
+                                  : client.name,
+                            ),
+                          ),
+                      ],
+                      onChanged: busy
+                          ? null
+                          : (id) => setState(() => _clientId = id),
+                      hint: Text(l10n.invoicesClientPlaceholder),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           SectionPanel(
             title: l10n.invoicesSectionCompany,
-            child: Text(l10n.invoicesSectionCompanyBody),
+            child: Column(
+              crossAxisAlignment: .stretch,
+              children: [
+                Text(l10n.invoicesSectionCompanyBody),
+                const SizedBox(height: 12),
+                if (isNew)
+                  StreamBuilder<CompanyProfile>(
+                    stream: _companyStream,
+                    builder: (context, snapshot) {
+                      final company =
+                          snapshot.data ?? AppDatabase.emptyCompany;
+                      return _CompanySummary(
+                        name: company.name,
+                        email: company.email,
+                        address: company.address,
+                        emptyLabel: l10n.invoicesCompanyEmpty,
+                      );
+                    },
+                  )
+                else
+                  _CompanySummary(
+                    name: widget.invoice!.companyName,
+                    email: widget.invoice!.companyEmail,
+                    address: widget.invoice!.companyAddress,
+                    emptyLabel: l10n.invoicesCompanyEmpty,
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           SectionPanel(
@@ -193,10 +689,32 @@ class _InvoiceEditor extends StatelessWidget {
               children: [
                 Text(l10n.invoicesSectionJobsBody),
                 const SizedBox(height: 12),
+                for (var i = 0; i < _lines.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 12),
+                  _JobLineRow(
+                    line: _lines[i],
+                    canRemove: _lines.length > 1 && !busy,
+                    onChanged: () => setState(() {}),
+                    onRemove: () => _removeLine(i),
+                    descriptionLabel: l10n.invoicesFieldDescription,
+                    quantityLabel: l10n.invoicesFieldQuantity,
+                    unitPriceLabel: l10n.invoicesFieldUnitPrice,
+                    removeLabel: l10n.invoicesRemoveJobLine,
+                  ),
+                ],
+                const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: busy ? null : _addLine,
                   icon: const Icon(Icons.add, size: 18),
                   label: Text(l10n.invoicesAddJobLine),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: .centerRight,
+                  child: Text(
+                    '${l10n.invoicesFieldTotal}: ${_formatMoney(_total)}',
+                    style: textTheme.titleMedium,
+                  ),
                 ),
               ],
             ),
@@ -210,18 +728,131 @@ class _InvoiceEditor extends StatelessWidget {
           Row(
             children: [
               FilledButton(
-                onPressed: () {},
+                onPressed: busy ? null : _save,
                 child: Text(l10n.invoicesSave),
               ),
               const SizedBox(width: 8),
               OutlinedButton(
-                onPressed: () {},
+                onPressed: null,
                 child: Text(l10n.invoicesPreview),
               ),
+              if (!isNew) ...[
+                const Spacer(),
+                FilledButton(
+                  style: destructiveFilledStyle(scheme),
+                  onPressed: busy ? null : _delete,
+                  child: Text(l10n.invoicesDelete),
+                ),
+              ],
             ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CompanySummary extends StatelessWidget {
+  const _CompanySummary({
+    required this.name,
+    required this.email,
+    required this.address,
+    required this.emptyLabel,
+  });
+
+  final String name;
+  final String email;
+  final String address;
+  final String emptyLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = <String>[
+      if (name.trim().isNotEmpty) name.trim(),
+      if (email.trim().isNotEmpty) email.trim(),
+      if (address.trim().isNotEmpty) address.trim(),
+    ];
+    if (parts.isEmpty) {
+      return Text(emptyLabel);
+    }
+    return Text(parts.join('\n'));
+  }
+}
+
+class _JobLineRow extends StatelessWidget {
+  const _JobLineRow({
+    required this.line,
+    required this.canRemove,
+    required this.onChanged,
+    required this.onRemove,
+    required this.descriptionLabel,
+    required this.quantityLabel,
+    required this.unitPriceLabel,
+    required this.removeLabel,
+  });
+
+  final _JobLineDraft line;
+  final bool canRemove;
+  final VoidCallback onChanged;
+  final VoidCallback onRemove;
+  final String descriptionLabel;
+  final String quantityLabel;
+  final String unitPriceLabel;
+  final String removeLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: .stretch,
+      children: [
+        TextField(
+          controller: line.description,
+          decoration: InputDecoration(labelText: descriptionLabel),
+          onChanged: (_) => onChanged(),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: .start,
+          children: [
+            Expanded(
+              child: TextField(
+                controller: line.quantity,
+                decoration: InputDecoration(labelText: quantityLabel),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                ],
+                onChanged: (_) => onChanged(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: line.unitPrice,
+                decoration: InputDecoration(labelText: unitPriceLabel),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                ],
+                onChanged: (_) => onChanged(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Padding(
+              padding: const .only(top: 8),
+              child: IconButton(
+                tooltip: removeLabel,
+                onPressed: canRemove ? onRemove : null,
+                icon: const Icon(Icons.delete_outline),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

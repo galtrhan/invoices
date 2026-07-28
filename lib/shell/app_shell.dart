@@ -60,7 +60,7 @@ class _AppShellState extends State<AppShell> {
 
   Widget _pageFor(AppSection section) {
     return switch (section) {
-      AppSection.invoices => const InvoicesPage(),
+      AppSection.invoices => InvoicesPage(database: widget.database),
       AppSection.clients => ClientsPage(database: widget.database),
       AppSection.company => CompanyPage(database: widget.database),
       AppSection.settings => SettingsPage(

@@ -2,6 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+ButtonStyle destructiveFilledStyle(ColorScheme scheme) {
+  return FilledButton.styleFrom(
+    backgroundColor: scheme.error,
+    foregroundColor: scheme.onError,
+  );
+}
+
 BoxDecoration _surfacePanelDecoration(ThemeData theme) {
   return BoxDecoration(
     color: theme.colorScheme.surface,

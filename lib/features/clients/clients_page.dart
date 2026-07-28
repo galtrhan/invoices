@@ -11,13 +11,6 @@ import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/widgets/master_detail.dart';
 import 'package:invoices/widgets/page_chrome.dart';
 
-ButtonStyle _destructiveStyle(ColorScheme scheme) {
-  return FilledButton.styleFrom(
-    backgroundColor: scheme.error,
-    foregroundColor: scheme.onError,
-  );
-}
-
 class ClientsPage extends StatefulWidget {
   const ClientsPage({super.key, required this.database});
 
@@ -374,7 +367,7 @@ class _ClientEditorState extends State<_ClientEditor> {
               child: Text(l10n.settingsCancel),
             ),
             FilledButton(
-              style: _destructiveStyle(scheme),
+              style: destructiveFilledStyle(scheme),
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: Text(l10n.clientsDeleteConfirmAction),
             ),
@@ -496,7 +489,7 @@ class _ClientEditorState extends State<_ClientEditor> {
                 ),
                 const Spacer(),
                 FilledButton(
-                  style: _destructiveStyle(scheme),
+                  style: destructiveFilledStyle(scheme),
                   onPressed: busy ? null : _delete,
                   child: Text(l10n.clientsDelete),
                 ),

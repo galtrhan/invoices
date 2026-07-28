@@ -34,13 +34,6 @@ class SettingsPage extends StatelessWidget {
   final ValueChanged<String> onLocalizationChanged;
   final Future<void> Function() onRestoreSettings;
 
-  static ButtonStyle _destructiveStyle(ColorScheme scheme) {
-    return FilledButton.styleFrom(
-      backgroundColor: scheme.error,
-      foregroundColor: scheme.onError,
-    );
-  }
-
   Future<void> _runConfirmed({
     required BuildContext context,
     required String title,
@@ -66,7 +59,7 @@ class SettingsPage extends StatelessWidget {
               child: Text(l10n.settingsCancel),
             ),
             FilledButton(
-              style: destructive ? _destructiveStyle(scheme) : null,
+              style: destructive ? destructiveFilledStyle(scheme) : null,
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: Text(actionLabel),
             ),
@@ -251,7 +244,7 @@ class SettingsPage extends StatelessWidget {
                         Align(
                           alignment: .centerLeft,
                           child: FilledButton(
-                            style: _destructiveStyle(scheme),
+                            style: destructiveFilledStyle(scheme),
                             onPressed: () => _resetData(context),
                             child: Text(l10n.settingsResetButton),
                           ),
