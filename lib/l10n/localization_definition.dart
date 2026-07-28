@@ -20,6 +20,8 @@ class LocalizationDefinition {
   String get navClients => _('nav_clients');
   String get navCompany => _('nav_company');
   String get navSettings => _('nav_settings');
+  String get navCollapse => _('nav_collapse');
+  String get navExpand => _('nav_expand');
 
   // Settings
   String get settingsTitle => _('settings_title');
@@ -181,6 +183,8 @@ class LocalizationDefinition {
       'nav_clients': 'Clients',
       'nav_company': 'Company',
       'nav_settings': 'Settings',
+      'nav_collapse': 'Collapse sidebar',
+      'nav_expand': 'Expand sidebar',
       'settings_title': 'Settings',
       'settings_subtitle': 'Application preferences',
       'settings_appearance': 'Appearance',

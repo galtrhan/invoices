@@ -5,6 +5,8 @@
     "nav_clients": "Klienti",
     "nav_company": "Uzņēmums",
     "nav_settings": "Iestatījumi",
+    "nav_collapse": "Sakļaut sānu joslu",
+    "nav_expand": "Izvērst sānu joslu",
     "settings_title": "Iestatījumi",
     "settings_subtitle": "Lietotnes preferences",
     "settings_appearance": "Izskats",
