@@ -32,8 +32,10 @@ class AppConfig {
 
   static const AppConfig defaults = AppConfig();
 
-  /// Debug (`make run`): project-local `config/config.json` (or `APP_CONFIG_PATH`).
-  /// Release (`make release`): `~/.config/invoices/config.json`.
+  /// Debug (`make run` / `make run-windows`): project-local
+  /// `config/config.json` (or `APP_CONFIG_PATH`).
+  /// Release Linux: `~/.config/invoices/config.json`.
+  /// Release Windows: `%APPDATA%/invoices/config.json`.
   static String get configPath {
     const fromDefine = String.fromEnvironment('APP_CONFIG_PATH');
     if (fromDefine.isNotEmpty) {
@@ -41,6 +43,14 @@ class AppConfig {
     }
 
     if (kReleaseMode) {
+      if (Platform.isWindows) {
+        final appData = Platform.environment['APPDATA'];
+        final base = (appData != null && appData.isNotEmpty)
+            ? appData
+            : '${Platform.environment['USERPROFILE']}/AppData/Roaming';
+        return '$base/invoices/config.json';
+      }
+
       final xdg = Platform.environment['XDG_CONFIG_HOME'];
       final base = (xdg != null && xdg.isNotEmpty)
           ? xdg

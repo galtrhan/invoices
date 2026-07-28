@@ -1,31 +1,39 @@
 # Invoices
 
-Linux desktop app that creates client invoices. The app targets Flutter on Linux only. It does not target mobile or web.
+Desktop app that creates client invoices. Default target is Linux. Windows is also supported. The app does not target mobile or web.
 
 ## Requirements
 
-- Linux desktop
+- Linux or Windows desktop
 - [FVM](https://fvm.app/) (preferred) or Flutter stable **3.41+**
 - Linux toolchain: `clang`, `cmake`, `ninja`, GTK 3 development packages
+- Windows toolchain: Visual Studio with the "Desktop development with C++" workload
 
 ```bash
 fvm use
 fvm flutter doctor
 ```
 
+Build Windows on a Windows host. Flutter does not cross-compile Windows from Linux.
+
 ## Makefile
 
 | Command | Description |
 |---------|-------------|
-| `make run` | Debug run on Linux. Uses `./config/config.json`. |
-| `make release` | Release build into `dist/` |
-| `make clean` | Remove Flutter build output and `dist/` |
+| `make run` | Debug run on Linux (default). Uses `./config/config.json`. |
+| `make release` | Linux release build into `dist/` |
+| `make run-windows` | Debug run on Windows. Uses `./config/config.json`. |
+| `make release-windows` | Windows release build into `dist-windows/` |
+| `make clean` | Remove Flutter build output, `dist/`, and `dist-windows/` |
 | `make hooks` | Enable tracked git hooks (`.githooks/`) |
 
 ```bash
 make hooks     # once per clone
 make run
 make release   # then: ./dist/invoices
+# On Windows:
+make run-windows
+make release-windows   # then: dist-windows/invoices.exe
 ```
 
 ## Git hooks
@@ -42,8 +50,9 @@ Config files live under `config/` in the repo. For missing keys, the app uses de
 
 | Build | Preferences | Themes | Localizations |
 |-------|-------------|--------|---------------|
-| Debug (`make run`) | `./config/config.json` | `./config/themes/` | `./config/localizations/` |
-| Release | `~/.config/invoices/config.json` | `~/.config/invoices/themes/` | `~/.config/invoices/localizations/` |
+| Debug (`make run` / `make run-windows`) | `./config/config.json` | `./config/themes/` | `./config/localizations/` |
+| Release (Linux) | `~/.config/invoices/config.json` | `~/.config/invoices/themes/` | `~/.config/invoices/localizations/` |
+| Release (Windows) | `%APPDATA%/invoices/config.json` | `%APPDATA%/invoices/themes/` | `%APPDATA%/invoices/localizations/` |
 
 ### Preferences (`config.json`)
 
@@ -151,7 +160,8 @@ config/
   config.json     preferences (tracked)
   themes/         custom theme JSON files
   localizations/  custom localization JSON files
-linux/runner/ native GTK bootstrap + decoration config
+linux/runner/   native GTK bootstrap + decoration config
+windows/runner/ Win32 bootstrap
 ```
 
 ## Coding standard
@@ -159,7 +169,7 @@ linux/runner/ native GTK bootstrap + decoration config
 - Dart / Flutter with `package:flutter_lints`
 - Prefer small feature folders over deep nesting
 - Use shared chrome and widgets before you copy page UI
-- Keep Linux runner changes small. Prefer Dart for app logic.
+- Keep platform runner changes small. Prefer Dart for app logic.
 - When you add native options, keep config defaults in sync in Dart (`AppConfig`) and C++ (`app_config.cc`)
 
 ```bash
