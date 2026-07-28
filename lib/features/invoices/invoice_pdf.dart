@@ -23,6 +23,7 @@ class InvoicePdfLabels {
     required this.sum,
     required this.paymentAmount,
     required this.amountInWords,
+    required this.amountInWordsFn,
     required this.electronicFooter,
   });
 
@@ -43,6 +44,7 @@ class InvoicePdfLabels {
       sum: l10n.pdfSum,
       paymentAmount: l10n.pdfPaymentAmount,
       amountInWords: l10n.pdfAmountInWords,
+      amountInWordsFn: l10n.amountInWords,
       electronicFooter: l10n.pdfElectronicFooter,
     );
   }
@@ -62,6 +64,7 @@ class InvoicePdfLabels {
   final String sum;
   final String paymentAmount;
   final String amountInWords;
+  final Future<String> Function(double) amountInWordsFn;
   final String electronicFooter;
 }
 
@@ -140,6 +143,9 @@ Future<Uint8List> buildInvoicePdf(InvoicePdfData data) async {
   final headerFill = _pdfColor(template.headerFill);
   final theme = _pdfTheme(data.fontRegular, data.fontBold);
   final showLogo = template.showLogo && logo != null;
+  final amountInWordsStr = template.showAmountInWords
+      ? '${labels.amountInWords} ${await labels.amountInWordsFn(total)}'
+      : null;
 
   doc.addPage(
     pw.Page(
@@ -271,11 +277,9 @@ Future<Uint8List> buildInvoicePdf(InvoicePdfData data) async {
                 ),
               ],
             ),
-            if (template.showAmountInWords) ...[
+            if (amountInWordsStr != null) ...[
               pw.SizedBox(height: 14),
-              pw.Text(
-                '${labels.amountInWords} ${_amountInWords(total)}',
-              ),
+              pw.Text(amountInWordsStr),
             ],
             pw.Spacer(),
             if (template.showElectronicFooter)
@@ -453,84 +457,4 @@ String _safeFilePart(String raw) {
   return cleaned.isEmpty ? 'invoice' : cleaned.toLowerCase();
 }
 
-String _amountInWords(double amount) {
-  final euros = amount.floor();
-  final cents = ((amount - euros) * 100).round().clamp(0, 99);
-  return '${_integerInWords(euros)} euros and $cents cents';
-}
 
-String _integerInWords(int value) {
-  if (value == 0) {
-    return 'zero';
-  }
-  if (value < 0) {
-    return 'minus ${_integerInWords(-value)}';
-  }
-
-  const ones = [
-    '',
-    'one',
-    'two',
-    'three',
-    'four',
-    'five',
-    'six',
-    'seven',
-    'eight',
-    'nine',
-    'ten',
-    'eleven',
-    'twelve',
-    'thirteen',
-    'fourteen',
-    'fifteen',
-    'sixteen',
-    'seventeen',
-    'eighteen',
-    'nineteen',
-  ];
-  const tens = [
-    '',
-    '',
-    'twenty',
-    'thirty',
-    'forty',
-    'fifty',
-    'sixty',
-    'seventy',
-    'eighty',
-    'ninety',
-  ];
-
-  String underThousand(int n) {
-    if (n < 20) {
-      return ones[n];
-    }
-    if (n < 100) {
-      final rest = n % 10;
-      final head = tens[n ~/ 10];
-      return rest == 0 ? head : '$head-${ones[rest]}';
-    }
-    final rest = n % 100;
-    final head = '${ones[n ~/ 100]} hundred';
-    return rest == 0 ? head : '$head ${underThousand(rest)}';
-  }
-
-  if (value < 1000) {
-    return underThousand(value);
-  }
-  if (value < 1000000) {
-    final rest = value % 1000;
-    final head = '${underThousand(value ~/ 1000)} thousand';
-    return rest == 0 ? head : '$head ${underThousand(rest)}';
-  }
-  final rest = value % 1000000;
-  final head = '${underThousand(value ~/ 1000000)} million';
-  if (rest == 0) {
-    return head;
-  }
-  if (rest < 1000) {
-    return '$head ${underThousand(rest)}';
-  }
-  return '$head ${_integerInWords(rest)}';
-}

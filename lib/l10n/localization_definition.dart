@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:num2text/num2text.dart';
 
 /// UI string pack. Built-in English is always available; JSON packs overlay keys.
 @immutable
@@ -6,12 +7,14 @@ class LocalizationDefinition {
   const LocalizationDefinition({
     required this.name,
     required Map<String, String> strings,
+    this.localeCode,
   }) : _strings = strings;
 
   static const defaultName = 'English';
 
   final String name;
   final Map<String, String> _strings;
+  final String? localeCode;
 
   String _(String key) => _strings[key] ?? key;
 
@@ -120,6 +123,118 @@ class LocalizationDefinition {
   String get pdfPaymentAmount => _('pdf_payment_amount');
   String get pdfAmountInWords => _('pdf_amount_in_words');
   String get pdfElectronicFooter => _('pdf_electronic_footer');
+
+  Future<String> amountInWords(double amount) async {
+    if (localeCode != null) {
+      try {
+        final lang = _langFromCode(localeCode!);
+        final converter = Num2Text();
+        converter.setLang(lang);
+        final options = _optionsForLang(lang);
+        return converter.convert(amount, options: options);
+      } catch (_) {
+        // locale not supported by num2text; use built-in English fallback
+      }
+    }
+    return _builtinAmountInWords(amount);
+  }
+
+  static final Map<String, Lang> _langIndex = {
+    for (final lang in Lang.values) lang.name.toLowerCase(): lang,
+  };
+
+  static Lang _langFromCode(String code) {
+    final iso = code.split('-').first.toLowerCase();
+    return _langIndex[iso] ?? Lang.EN;
+  }
+
+  static BaseOptions _optionsForLang(Lang lang) {
+    switch (lang) {
+      case Lang.LV:
+        return LvOptions(currency: true);
+      case Lang.FR:
+        return FrOptions(currency: true, currencyInfo: CurrencyInfo.eurFr);
+      case Lang.DE:
+        return DeOptions(currency: true, currencyInfo: CurrencyInfo.eurDe);
+      case Lang.ES:
+        return EsOptions(currency: true, currencyInfo: CurrencyInfo.eurEs);
+      case Lang.IT:
+        return ItOptions(currency: true, currencyInfo: CurrencyInfo.eurIt);
+      case Lang.PT:
+        return PtOptions(currency: true, currencyInfo: CurrencyInfo.eurPt);
+      case Lang.NL:
+        return NlOptions(currency: true, currencyInfo: CurrencyInfo.eurNl);
+      case Lang.FI:
+        return FiOptions(currency: true, currencyInfo: CurrencyInfo.eurFi);
+      case Lang.LT:
+        return LtOptions(currency: true, currencyInfo: CurrencyInfo.eurLt);
+      case Lang.SK:
+        return SkOptions(currency: true, currencyInfo: CurrencyInfo.eurSk);
+      case Lang.SL:
+        return SlOptions(currency: true, currencyInfo: CurrencyInfo.eurSl);
+      case Lang.HR:
+        return HrOptions(currency: true, currencyInfo: CurrencyInfo.eurHr);
+      case Lang.EL:
+        return ElOptions(currency: true, currencyInfo: CurrencyInfo.eurEl);
+      case Lang.EN:
+        return EnOptions(currency: true, currencyInfo: _eurEn);
+      default:
+        return EnOptions(currency: true, currencyInfo: _eurEn);
+    }
+  }
+
+  static const CurrencyInfo _eurEn = CurrencyInfo(
+    mainUnitSingular: 'euro',
+    mainUnitPlural: 'euros',
+    subUnitSingular: 'cent',
+    subUnitPlural: 'cents',
+    separator: ' and ',
+  );
+
+  String _builtinAmountInWords(double amount) {
+    final euros = amount.floor();
+    final cents = ((amount - euros) * 100).round().clamp(0, 99);
+    return '${_builtinIntegerInWords(euros)} euros and $cents cents';
+  }
+
+  String _builtinIntegerInWords(int value) {
+    if (value == 0) return 'zero';
+    if (value < 0) return 'minus ${_builtinIntegerInWords(-value)}';
+
+    const ones = [
+      '', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
+      'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen',
+      'sixteen', 'seventeen', 'eighteen', 'nineteen',
+    ];
+    const tens = [
+      '', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy',
+      'eighty', 'ninety',
+    ];
+
+    String underThousand(int n) {
+      if (n < 20) return ones[n];
+      if (n < 100) {
+        final rest = n % 10;
+        final head = tens[n ~/ 10];
+        return rest == 0 ? head : '$head-${ones[rest]}';
+      }
+      final rest = n % 100;
+      final head = '${ones[n ~/ 100]} hundred';
+      return rest == 0 ? head : '$head ${underThousand(rest)}';
+    }
+
+    if (value < 1000) return underThousand(value);
+    if (value < 1000000) {
+      final rest = value % 1000;
+      final head = '${underThousand(value ~/ 1000)} thousand';
+      return rest == 0 ? head : '$head ${underThousand(rest)}';
+    }
+    final rest = value % 1000000;
+    final head = '${underThousand(value ~/ 1000000)} million';
+    if (rest == 0) return head;
+    if (rest < 1000) return '$head ${underThousand(rest)}';
+    return '$head ${_builtinIntegerInWords(rest)}';
+  }
 
   // Clients
   String get clientsTitle => _('clients_title');
@@ -388,9 +503,13 @@ class LocalizationDefinition {
       }
     }
 
+    final rawCode = json['locale_code'];
+
     return LocalizationDefinition(
       name: name.trim(),
       strings: {...builtinEnglish._strings, ...strings},
+      localeCode:
+          rawCode is String && rawCode.isNotEmpty ? rawCode.trim() : null,
     );
   }
 }

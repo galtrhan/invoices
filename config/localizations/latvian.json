@@ -1,5 +1,6 @@
 {
   "name": "Latviešu",
+  "locale_code": "lv-LV",
   "strings": {
     "nav_invoices": "Rēķini",
     "nav_clients": "Klienti",
