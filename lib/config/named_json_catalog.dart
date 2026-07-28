@@ -3,6 +3,28 @@ import 'dart:io';
 
 String catalogNameKey(String name) => name.trim().toLowerCase();
 
+String? optionalCatalogString(Object? value) {
+  if (value is! String) {
+    return null;
+  }
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
+}
+
+T? findNamedCatalogItem<T>({
+  required List<T> items,
+  required String name,
+  required String Function(T item) nameOf,
+}) {
+  final needle = catalogNameKey(name);
+  for (final item in items) {
+    if (catalogNameKey(nameOf(item)) == needle) {
+      return item;
+    }
+  }
+  return null;
+}
+
 /// Loads `*.json` packs from [directory], skipping invalid/duplicate names.
 ///
 /// Does not include a builtin entry — callers prepend their own default.

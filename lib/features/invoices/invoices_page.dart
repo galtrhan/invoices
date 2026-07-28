@@ -684,13 +684,16 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
       final number =
           _number.text.trim().isEmpty ? invoice.number : _number.text.trim();
       final clientName = invoice.clientName;
-      final preferredFont = widget.systemFonts.resolvePreferred(
+      final preferredFamily = widget.systemFonts.resolvePreferred(
         templateFont: template.font,
         settingsFont: widget.pdfFont,
       );
       final logoAndFonts = await (
         _readLogoBytes(invoice.companyLogoPath),
-        InvoicePdfFonts.load(preferredFamily: preferredFont),
+        InvoicePdfFonts.load(
+          catalog: widget.systemFonts,
+          family: preferredFamily,
+        ),
       ).wait;
       final logoBytes = logoAndFonts.$1;
       final fonts = logoAndFonts.$2;
@@ -797,8 +800,8 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return FormPageBody(
-      child: Column(
+    return FormEditorLayout(
+      body: Column(
         crossAxisAlignment: .start,
         children: [
           Text(
@@ -931,28 +934,27 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
             title: l10n.invoicesSectionHistory,
             child: Text(l10n.invoicesSectionHistoryBody),
           ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              FilledButton(
-                onPressed: busy ? null : _save,
-                child: Text(l10n.invoicesSave),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: busy || isNew ? null : _openExportDialog,
-                child: Text(l10n.invoicesExport),
-              ),
-              if (!isNew) ...[
-                const Spacer(),
-                FilledButton(
-                  style: destructiveFilledStyle(scheme),
-                  onPressed: busy ? null : _delete,
-                  child: Text(l10n.invoicesDelete),
-                ),
-              ],
-            ],
+        ],
+      ),
+      actions: Row(
+        children: [
+          FilledButton(
+            onPressed: busy ? null : _save,
+            child: Text(l10n.invoicesSave),
           ),
+          const SizedBox(width: 8),
+          OutlinedButton(
+            onPressed: busy || isNew ? null : _openExportDialog,
+            child: Text(l10n.invoicesExport),
+          ),
+          if (!isNew) ...[
+            const Spacer(),
+            FilledButton(
+              style: destructiveFilledStyle(scheme),
+              onPressed: busy ? null : _delete,
+              child: Text(l10n.invoicesDelete),
+            ),
+          ],
         ],
       ),
     );

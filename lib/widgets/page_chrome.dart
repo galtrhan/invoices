@@ -285,3 +285,43 @@ class FormPageBody extends StatelessWidget {
     );
   }
 }
+
+class PageActionBar extends StatelessWidget {
+  const PageActionBar({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const .fromLTRB(24, 12, 24, 24),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(top: BorderSide(color: theme.dividerColor)),
+      ),
+      child: child,
+    );
+  }
+}
+
+class FormEditorLayout extends StatelessWidget {
+  const FormEditorLayout({
+    super.key,
+    required this.body,
+    required this.actions,
+  });
+
+  final Widget body;
+  final Widget actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(child: FormPageBody(child: body)),
+        PageActionBar(child: actions),
+      ],
+    );
+  }
+}

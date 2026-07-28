@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/services.dart' show rootBundle;
 
-import 'package:invoices/config/named_json_catalog.dart';
+import 'package:invoices/data/system_font_catalog.dart';
 import 'package:invoices/data/system_fonts.dart';
 
 class InvoicePdfFonts {
@@ -24,35 +24,31 @@ class InvoicePdfFonts {
     'arial',
   ];
 
-  static Future<InvoicePdfFonts> load({String? preferredFamily}) async {
-    final families = await SystemFontScanner.scan();
-    final byKey = {
-      for (final family in families) catalogNameKey(family.name): family,
-    };
-
-    if (preferredFamily != null && preferredFamily.isNotEmpty) {
-      final family = byKey[catalogNameKey(preferredFamily)];
-      if (family != null) {
-        return _loadFromPaths(
-          family.regularPath,
-          family.boldPath ?? family.regularPath,
-        );
-      }
+  static Future<InvoicePdfFonts> load({
+    required SystemFontCatalog catalog,
+    SystemFontFamily? family,
+  }) async {
+    if (family != null) {
+      return _loadFromFamily(family);
     }
 
     for (final key in _autoPreferredKeys) {
-      final family = byKey[key];
-      if (family != null) {
-        return _loadFromPaths(
-          family.regularPath,
-          family.boldPath ?? family.regularPath,
-        );
+      final match = catalog.resolve(key);
+      if (match != null) {
+        return _loadFromFamily(match);
       }
     }
 
     return InvoicePdfFonts._(
       regular: await rootBundle.load('assets/fonts/DejaVuSans.ttf'),
       bold: await rootBundle.load('assets/fonts/DejaVuSans-Bold.ttf'),
+    );
+  }
+
+  static Future<InvoicePdfFonts> _loadFromFamily(SystemFontFamily family) {
+    return _loadFromPaths(
+      family.regularPath,
+      family.boldPath ?? family.regularPath,
     );
   }
 

@@ -230,45 +230,47 @@ class SettingsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   SectionPanel(
-                    title: l10n.settingsPdfTemplate,
-                    child: DropdownMenu<String>(
-                      key: ValueKey('pdf-template-$pdfTemplate'),
-                      initialSelection: pdfTemplate,
-                      label: Text(l10n.settingsPdfTemplate),
-                      expandedInsets: .zero,
-                      onSelected: (value) {
-                        if (value != null) {
-                          onPdfTemplateChanged(value);
-                        }
-                      },
-                      dropdownMenuEntries: [
-                        for (final option in templates.templates)
-                          DropdownMenuEntry(
-                            value: option.name,
-                            label: option.name,
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SectionPanel(
-                    title: l10n.settingsPdfFont,
-                    child: DropdownMenu<String?>(
-                      key: ValueKey('pdf-font-$pdfFont'),
-                      initialSelection: pdfFont,
-                      label: Text(l10n.settingsPdfFont),
-                      expandedInsets: .zero,
-                      onSelected: onPdfFontChanged,
-                      dropdownMenuEntries: [
-                        DropdownMenuEntry(
-                          value: null,
-                          label: l10n.settingsPdfFontAuto,
+                    title: l10n.settingsPdf,
+                    child: Column(
+                      crossAxisAlignment: .stretch,
+                      children: [
+                        DropdownMenu<String>(
+                          key: ValueKey('pdf-template-$pdfTemplate'),
+                          initialSelection: pdfTemplate,
+                          label: Text(l10n.settingsPdfTemplate),
+                          expandedInsets: .zero,
+                          onSelected: (value) {
+                            if (value != null) {
+                              onPdfTemplateChanged(value);
+                            }
+                          },
+                          dropdownMenuEntries: [
+                            for (final option in templates.templates)
+                              DropdownMenuEntry(
+                                value: option.name,
+                                label: option.name,
+                              ),
+                          ],
                         ),
-                        for (final font in systemFonts.families)
-                          DropdownMenuEntry(
-                            value: font.name,
-                            label: font.name,
-                          ),
+                        const SizedBox(height: 16),
+                        DropdownMenu<String?>(
+                          key: ValueKey('pdf-font-$pdfFont'),
+                          initialSelection: pdfFont,
+                          label: Text(l10n.settingsPdfFont),
+                          expandedInsets: .zero,
+                          onSelected: onPdfFontChanged,
+                          dropdownMenuEntries: [
+                            DropdownMenuEntry(
+                              value: null,
+                              label: l10n.settingsPdfFontAuto,
+                            ),
+                            for (final font in systemFonts.families)
+                              DropdownMenuEntry(
+                                value: font.name,
+                                label: font.name,
+                              ),
+                          ],
+                        ),
                       ],
                     ),
                   ),

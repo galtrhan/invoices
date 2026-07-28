@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:invoices/config/named_json_catalog.dart';
+
 /// Declarative invoice PDF layout pack loaded from `<configDir>/templates`.
 @immutable
 class InvoiceTemplateDefinition {
@@ -145,7 +147,7 @@ class InvoiceTemplateDefinition {
           _double(spacing['after_parties'], base.spacingAfterParties),
       spacingBeforeTable:
           _double(spacing['before_table'], base.spacingBeforeTable),
-      font: _string(json['font']),
+      font: optionalCatalogString(json['font']),
     );
   }
 }
@@ -172,14 +174,6 @@ bool _bool(Object? value, bool fallback) {
     return value;
   }
   return fallback;
-}
-
-String? _string(Object? value) {
-  if (value is String) {
-    final trimmed = value.trim();
-    if (trimmed.isNotEmpty) return trimmed;
-  }
-  return null;
 }
 
 String _color(Object? value, String fallback) {

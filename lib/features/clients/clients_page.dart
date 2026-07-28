@@ -439,8 +439,8 @@ class _ClientEditorState extends State<_ClientEditor> {
         ? l10n.clientsEditorNew
         : client.name;
 
-    return FormPageBody(
-      child: Column(
+    return FormEditorLayout(
+      body: Column(
         crossAxisAlignment: .start,
         children: [
           Text(title, style: textTheme.headlineMedium),
@@ -512,28 +512,27 @@ class _ClientEditorState extends State<_ClientEditor> {
             onUpload: busy ? null : _pickLogo,
             onRemove: (busy || previewPath == null) ? null : _removeLogo,
           ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              FilledButton(
-                onPressed: busy ? null : _save,
-                child: Text(isNew ? l10n.clientsCreate : l10n.clientsSave),
-              ),
-              if (!isNew) ...[
-                const SizedBox(width: 8),
-                OutlinedButton(
-                  onPressed: () {},
-                  child: Text(l10n.clientsViewHistory),
-                ),
-                const Spacer(),
-                FilledButton(
-                  style: destructiveFilledStyle(scheme),
-                  onPressed: busy ? null : _delete,
-                  child: Text(l10n.clientsDelete),
-                ),
-              ],
-            ],
+        ],
+      ),
+      actions: Row(
+        children: [
+          FilledButton(
+            onPressed: busy ? null : _save,
+            child: Text(isNew ? l10n.clientsCreate : l10n.clientsSave),
           ),
+          if (!isNew) ...[
+            const SizedBox(width: 8),
+            OutlinedButton(
+              onPressed: () {},
+              child: Text(l10n.clientsViewHistory),
+            ),
+            const Spacer(),
+            FilledButton(
+              style: destructiveFilledStyle(scheme),
+              onPressed: busy ? null : _delete,
+              child: Text(l10n.clientsDelete),
+            ),
+          ],
         ],
       ),
     );

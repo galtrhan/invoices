@@ -283,23 +283,24 @@ class _CompanyPageState extends State<CompanyPage> {
                                 l10n.companyFieldInvoiceNumberFormatHint,
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        Row(
-                          children: [
-                            FilledButton(
-                              onPressed: busy ? null : _save,
-                              child: Text(l10n.companySave),
-                            ),
-                            const SizedBox(width: 8),
-                            OutlinedButton(
-                              onPressed: () {},
-                              child: Text(l10n.companyViewHistory),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
             ),
+          ),
+        ),
+        PageActionBar(
+          child: Row(
+            children: [
+              FilledButton(
+                onPressed: busy ? null : _save,
+                child: Text(l10n.companySave),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: () {},
+                child: Text(l10n.companyViewHistory),
+              ),
+            ],
           ),
         ),
       ],

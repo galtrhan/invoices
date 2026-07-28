@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:invoices/config/named_json_catalog.dart';
 import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/pdf/invoice_template_definition.dart';
 import 'package:invoices/theme/theme_definition.dart';
@@ -130,13 +131,8 @@ class AppConfig {
   static String pdfTemplateFromJson(Object? value) =>
       namedPreferenceFromJson(value, InvoiceTemplateDefinition.defaultName);
 
-  static String? optionalStringFromJson(Object? value) {
-    if (value is! String) {
-      return null;
-    }
-    final trimmed = value.trim();
-    return trimmed.isEmpty ? null : trimmed;
-  }
+  static String? optionalStringFromJson(Object? value) =>
+      optionalCatalogString(value);
 
   static Future<AppConfig> load() async {
     final file = File(configPath);

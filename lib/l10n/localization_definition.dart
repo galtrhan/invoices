@@ -35,6 +35,7 @@ class LocalizationDefinition {
   String get settingsLight => _('settings_light');
   String get settingsDark => _('settings_dark');
   String get settingsLanguage => _('settings_language');
+  String get settingsPdf => _('settings_pdf');
   String get settingsPdfTemplate => _('settings_pdf_template');
   String get settingsPdfFont => _('settings_pdf_font');
   String get settingsPdfFontAuto => _('settings_pdf_font_auto');
@@ -317,6 +318,7 @@ class LocalizationDefinition {
       'settings_light': 'Light',
       'settings_dark': 'Dark',
       'settings_language': 'Language',
+      'settings_pdf': 'PDF',
       'settings_pdf_template': 'PDF template',
       'settings_pdf_font': 'PDF font',
       'settings_pdf_font_auto': 'Automatic',
