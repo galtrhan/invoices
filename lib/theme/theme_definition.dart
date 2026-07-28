@@ -116,6 +116,7 @@ class ThemePalette {
       onError: onPrimary,
       surface: surface,
       onSurface: onSurface,
+      onSurfaceVariant: muted,
       primaryContainer: Color.lerp(primary, surface, 0.82)!,
       onPrimaryContainer: onSurface,
       outline: outline,

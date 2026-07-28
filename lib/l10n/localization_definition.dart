@@ -180,10 +180,6 @@ class LocalizationDefinition {
       _('company_field_invoice_number_format');
   String get companyFieldInvoiceNumberFormatHint =>
       _('company_field_invoice_number_format_hint');
-  String get companyFieldLastInvoiceNumber =>
-      _('company_field_last_invoice_number');
-  String get companyFieldLastInvoiceNumberHint =>
-      _('company_field_last_invoice_number_hint');
   String get companySave => _('company_save');
   String get companySaved => _('company_saved');
   String get companySaveFailed => _('company_save_failed');
@@ -370,10 +366,7 @@ class LocalizationDefinition {
       'company_field_notes': 'Contact notes',
       'company_field_invoice_number_format': 'Invoice number format',
       'company_field_invoice_number_format_hint':
-          'Use {number} and {YEAR}. Default {number}/{YEAR} makes 1/2026. The sequence resets each year.',
-      'company_field_last_invoice_number': 'Last invoice number',
-      'company_field_last_invoice_number_hint':
-          'Set the last number you already used this year. The next invoice uses this value + 1.',
+          'Use {number} and DateFormat patterns like {yyyy} or {yyyy-MM-dd}. Default {number}/{yyyy} makes 1/2026. The sequence resets each year.',
       'company_save': 'Save company',
       'company_saved': 'Company saved',
       'company_save_failed': 'Could not save company',

@@ -250,7 +250,7 @@ class AppDatabase extends _$AppDatabase {
     return formatInvoiceNumber(
       profile.invoiceNumberFormat,
       number: last + 1,
-      year: year,
+      issuedOn: issuedOn,
     );
   }
 

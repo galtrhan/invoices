@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'package:invoices/data/app_database.dart';
 import 'package:invoices/data/invoice_number_format.dart';
@@ -31,7 +30,6 @@ class _CompanyPageState extends State<CompanyPage> {
   final _payment = TextEditingController();
   final _notes = TextEditingController();
   final _invoiceNumberFormat = TextEditingController();
-  final _lastInvoiceSequence = TextEditingController();
   final _logo = LogoDraft(category: _logoCategory);
 
   var _loading = true;
@@ -55,7 +53,6 @@ class _CompanyPageState extends State<CompanyPage> {
     _payment.dispose();
     _notes.dispose();
     _invoiceNumberFormat.dispose();
-    _lastInvoiceSequence.dispose();
     super.dispose();
   }
 
@@ -75,13 +72,6 @@ class _CompanyPageState extends State<CompanyPage> {
       _invoiceNumberFormat.text = resolveInvoiceNumberFormat(
         company.invoiceNumberFormat,
       );
-      final lastSequence = lastInvoiceSequenceForYear(
-        lastSequence: company.lastInvoiceSequence,
-        lastSequenceYear: company.lastInvoiceSequenceYear,
-        year: DateTime.now().year,
-      );
-      _lastInvoiceSequence.text =
-          lastSequence > 0 ? lastSequence.toString() : '';
       _logo.resetFromStored(company.logoPath);
       await _logo.discardStaging();
     } catch (_) {
@@ -132,8 +122,6 @@ class _CompanyPageState extends State<CompanyPage> {
 
     setState(() => _saving = true);
     final l10n = AppLocalizations.of(context);
-    final lastSequence =
-        int.tryParse(_lastInvoiceSequence.text.trim()) ?? 0;
     try {
       final outcome = await LogoSave.run<void>(
         category: _logo.category,
@@ -153,8 +141,6 @@ class _CompanyPageState extends State<CompanyPage> {
               invoiceNumberFormat: Value(
                 resolveInvoiceNumberFormat(_invoiceNumberFormat.text),
               ),
-              lastInvoiceSequence: Value(lastSequence),
-              lastInvoiceSequenceYear: Value(DateTime.now().year),
               logoPath: Value(nextLogo),
             ),
           );
@@ -295,19 +281,6 @@ class _CompanyPageState extends State<CompanyPage> {
                             labelText: l10n.companyFieldInvoiceNumberFormat,
                             helperText:
                                 l10n.companyFieldInvoiceNumberFormatHint,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _lastInvoiceSequence,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          decoration: InputDecoration(
-                            labelText: l10n.companyFieldLastInvoiceNumber,
-                            helperText:
-                                l10n.companyFieldLastInvoiceNumberHint,
                           ),
                         ),
                         const SizedBox(height: 24),

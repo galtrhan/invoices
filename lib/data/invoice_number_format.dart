@@ -1,18 +1,29 @@
+import 'package:intl/intl.dart';
+
 /// Default invoice number pattern: `1/2026`, `2/2026`, …
 ///
 /// Placeholders:
 /// - `{number}` — yearly sequence (1, 2, 3, …)
 /// - `{number:N}` — zero-padded sequence (width N)
-/// - `{YEAR}` / `{year}` — four-digit calendar year
-const defaultInvoiceNumberFormat = '{number}/{YEAR}';
+/// - `{yyyy}`, `{yyyy-MM-dd}`, … — any [DateFormat] pattern in braces
+///
+/// Date patterns use ICU/`intl` syntax (Flutter standard). Examples:
+/// `yyyy` (PHP `Y`), `yy` (PHP `y`), `MM` (PHP `m`), `dd` (PHP `d`).
+const defaultInvoiceNumberFormat = '{number}/{yyyy}';
 
 final _tokenPattern = RegExp(
-  r'\{(?:(?:number|NUMBER)(?::(\d+))?|(YEAR|year))\}',
+  r'\{(?:(?:number|NUMBER)(?::(\d+))?|([^}]+))\}',
 );
 
 String resolveInvoiceNumberFormat(String format) {
   final trimmed = format.trim();
-  return trimmed.isEmpty ? defaultInvoiceNumberFormat : trimmed;
+  if (trimmed.isEmpty) {
+    return defaultInvoiceNumberFormat;
+  }
+  // Legacy tokens from the first format release.
+  return trimmed
+      .replaceAll('{YEAR}', '{yyyy}')
+      .replaceAll('{year}', '{yyyy}');
 }
 
 /// Last stored sequence for [year], or `0` when the year changed.
@@ -27,12 +38,13 @@ int lastInvoiceSequenceForYear({
 String formatInvoiceNumber(
   String format, {
   required int number,
-  required int year,
+  required DateTime issuedOn,
 }) {
   final pattern = resolveInvoiceNumberFormat(format);
   return pattern.replaceAllMapped(_tokenPattern, (match) {
-    if (match.group(2) != null) {
-      return year.toString();
+    final datePattern = match.group(2);
+    if (datePattern != null) {
+      return DateFormat(datePattern).format(issuedOn);
     }
     final width = int.tryParse(match.group(1) ?? '');
     final raw = number.toString();
@@ -61,10 +73,14 @@ _CompiledInvoiceNumberFormat _compileInvoiceNumberFormat(
   var group = 0;
   for (final match in _tokenPattern.allMatches(pattern)) {
     buffer.write(RegExp.escape(pattern.substring(start, match.start)));
-    if (match.group(2) != null) {
-      buffer.write(capture ? r'(\d{4})' : r'\d{4}');
+    final datePattern = match.group(2);
+    if (datePattern != null) {
+      final dateRegex = _dateFormatToRegex(datePattern);
       if (capture) {
+        buffer.write('($dateRegex)');
         group++;
+      } else {
+        buffer.write(dateRegex);
       }
     } else {
       final width = int.tryParse(match.group(1) ?? '');
@@ -83,6 +99,48 @@ _CompiledInvoiceNumberFormat _compileInvoiceNumberFormat(
   buffer.write(RegExp.escape(pattern.substring(start)));
   buffer.write(r'$');
   return _CompiledInvoiceNumberFormat(RegExp(buffer.toString()), numberGroup);
+}
+
+/// Maps a DateFormat pattern fragment to a matching regex.
+String _dateFormatToRegex(String pattern) {
+  final out = StringBuffer();
+  var i = 0;
+  while (i < pattern.length) {
+    final char = pattern[i];
+    if (_isPatternLetter(char)) {
+      var end = i + 1;
+      while (end < pattern.length && pattern[end] == char) {
+        end++;
+      }
+      out.write(_patternFieldRegex(char, end - i));
+      i = end;
+      continue;
+    }
+    out.write(RegExp.escape(char));
+    i++;
+  }
+  return out.toString();
+}
+
+bool _isPatternLetter(String char) {
+  final code = char.codeUnitAt(0);
+  return (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+}
+
+String _patternFieldRegex(String letter, int count) {
+  switch (letter) {
+    case 'y':
+      return count == 2 ? r'\d{2}' : r'\d{4}';
+    case 'M':
+      if (count >= 3) {
+        return r'[^\W\d_]+';
+      }
+      return count == 2 ? r'\d{2}' : r'\d{1,2}';
+    case 'd':
+      return count == 2 ? r'\d{2}' : r'\d{1,2}';
+    default:
+      return RegExp.escape(letter * count);
+  }
 }
 
 RegExp invoiceNumberFormatPattern(String format) {
