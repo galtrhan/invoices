@@ -23,7 +23,20 @@ class CompanyProfiles extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [CompanyProfiles])
+class Clients extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().withDefault(const Constant(''))();
+  TextColumn get email => text().withDefault(const Constant(''))();
+  TextColumn get phone => text().withDefault(const Constant(''))();
+  TextColumn get taxId => text().withDefault(const Constant(''))();
+  TextColumn get address => text().withDefault(const Constant(''))();
+  TextColumn get notes => text().withDefault(const Constant(''))();
+  TextColumn get logoPath => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+}
+
+@DriftDatabase(tables: [CompanyProfiles, Clients])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -44,7 +57,19 @@ class AppDatabase extends _$AppDatabase {
   );
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) => m.createAll(),
+      onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 2) {
+          await m.createTable(clients);
+        }
+      },
+    );
+  }
 
   Future<CompanyProfile> getCompany() async {
     final row = await (select(companyProfiles)
@@ -67,6 +92,38 @@ class AppDatabase extends _$AppDatabase {
         updatedAt: Value(DateTime.now()),
       ),
     );
+  }
+
+  Stream<List<Client>> watchClients() {
+    return (select(clients)
+          ..orderBy([(row) => OrderingTerm.asc(row.name)]))
+        .watch();
+  }
+
+  Future<Client?> getClient(int id) {
+    return (select(clients)..where((row) => row.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Future<Client> saveClient({
+    int? id,
+    required ClientsCompanion data,
+  }) async {
+    final now = DateTime.now();
+    if (id == null) {
+      return into(clients).insertReturning(
+        data.copyWith(
+          createdAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
+    }
+
+    final rows =
+        await (update(clients)..where((row) => row.id.equals(id))).writeReturning(
+      data.copyWith(updatedAt: Value(now)),
+    );
+    return rows.single;
   }
 }
 

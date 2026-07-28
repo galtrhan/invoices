@@ -74,6 +74,10 @@ class LocalizationDefinition {
   String get clientsLogoSubtitle => _('clients_logo_subtitle');
   String get clientsCreate => _('clients_create');
   String get clientsSave => _('clients_save');
+  String get clientsCreated => _('clients_created');
+  String get clientsSaved => _('clients_saved');
+  String get clientsSaveFailed => _('clients_save_failed');
+  String get clientsLoadFailed => _('clients_load_failed');
   String get clientsViewHistory => _('clients_view_history');
   String get logoUpload => _('logo_upload');
   String get logoRemove => _('logo_remove');
@@ -170,6 +174,10 @@ class LocalizationDefinition {
       'logo_import_failed': 'Could not import image',
       'clients_create': 'Create client',
       'clients_save': 'Save changes',
+      'clients_created': 'Client created',
+      'clients_saved': 'Client saved',
+      'clients_save_failed': 'Could not save client',
+      'clients_load_failed': 'Could not load clients',
       'clients_view_history': 'View history',
       'company_title': 'Company',
       'company_subtitle': 'Your business details for the invoice header',

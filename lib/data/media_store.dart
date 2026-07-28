@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/painting.dart';
@@ -65,6 +66,28 @@ class MediaStore {
     return relative.replaceAll(r'\', '/');
   }
 
+  /// Stable folder for an existing client (`clients/<id>`).
+  static String clientLogoCategory(int clientId) => 'clients/$clientId';
+
+  /// Pre-allocated folder for a new client so create can write logo + row once.
+  static String newClientLogoCategory() {
+    final time = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+    final salt = Random.secure().nextInt(1 << 30).toRadixString(36);
+    return 'clients/$time$salt';
+  }
+
+  /// Reads `media/<category>/…` back into a category key, or null if unknown.
+  static String? categoryFromStoredPath(String? stored) {
+    if (stored == null || stored.isEmpty) {
+      return null;
+    }
+    final parts = stored.replaceAll(r'\', '/').split('/');
+    if (parts.length < 3 || parts.first != 'media') {
+      return null;
+    }
+    return parts.sublist(1, parts.length - 1).join('/');
+  }
+
   static Future<void> discardStagedLogo({required String category}) async {
     final dir = Directory(p.join(AppConfig.mediaDirectory, category));
     await _clearBasenameVariants(dir, _stagingBasename);
@@ -78,6 +101,12 @@ class MediaStore {
     if (await file.exists()) {
       await FileImage(file).evict();
       await file.delete();
+    }
+  }
+
+  static Future<void> deleteReplacedLogo(String? previous, String? next) async {
+    if (previous != null && previous != next) {
+      await deleteStored(previous);
     }
   }
 

@@ -1,11 +1,20 @@
+import 'dart:async';
+
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 
+import 'package:invoices/data/app_database.dart';
+import 'package:invoices/data/logo_draft.dart';
+import 'package:invoices/data/logo_save.dart';
+import 'package:invoices/data/media_store.dart';
 import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/widgets/master_detail.dart';
 import 'package:invoices/widgets/page_chrome.dart';
 
 class ClientsPage extends StatefulWidget {
-  const ClientsPage({super.key});
+  const ClientsPage({super.key, required this.database});
+
+  final AppDatabase database;
 
   @override
   State<ClientsPage> createState() => _ClientsPageState();
@@ -13,9 +22,25 @@ class ClientsPage extends StatefulWidget {
 
 class _ClientsPageState extends State<ClientsPage> {
   _Detail _detail = const _Detail.empty();
-  final List<_ClientDraft> _clients = [];
+  late Stream<List<Client>> _clientsStream = widget.database.watchClients();
+
+  @override
+  void didUpdateWidget(covariant ClientsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.database, widget.database)) {
+      _clientsStream = widget.database.watchClients();
+    }
+  }
 
   void _startCreate() => setState(() => _detail = const _Detail.create());
+
+  void _select(Client client) {
+    setState(() => _detail = _Detail.selected(client.id));
+  }
+
+  void _onSaved(Client client) {
+    setState(() => _detail = _Detail.selected(client.id));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,27 +61,56 @@ class _ClientsPageState extends State<ClientsPage> {
           ],
         ),
         Expanded(
-          child: MasterDetail(
-            master: _ClientList(
-              clients: _clients,
-              selectedId: switch (_detail) {
-                _Selected(:final client) => client.id,
+          child: StreamBuilder<List<Client>>(
+            stream: _clientsStream,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return EmptyPane(
+                  title: l10n.clientsLoadFailed,
+                  message: l10n.clientsLoadFailed,
+                );
+              }
+
+              final clients = snapshot.data ?? const <Client>[];
+              final selectedId = switch (_detail) {
+                _Selected(:final id) => id,
                 _ => null,
-              },
-              onSelect: (client) {
-                setState(() => _detail = _Detail.selected(client));
-              },
-              onCreate: _startCreate,
-            ),
-            detail: switch (_detail) {
-              _Create() => const _ClientEditor.create(),
-              _Selected(:final client) => _ClientEditor.view(client),
-              _Empty() => EmptyPane(
-                title: l10n.clientsNoneSelectedTitle,
-                message: l10n.clientsNoneSelectedMessage,
-                actionLabel: l10n.clientsNew,
-                onAction: _startCreate,
-              ),
+              };
+              final selected = selectedId == null
+                  ? null
+                  : clients.where((c) => c.id == selectedId).firstOrNull;
+
+              return MasterDetail(
+                master: _ClientList(
+                  clients: clients,
+                  selectedId: selectedId,
+                  onSelect: _select,
+                  onCreate: _startCreate,
+                ),
+                detail: switch (_detail) {
+                  _Create() => _ClientEditor(
+                      key: const ValueKey('new'),
+                      database: widget.database,
+                      client: null,
+                      onSaved: _onSaved,
+                    ),
+                  _Selected() when selected != null => _ClientEditor(
+                      key: ValueKey(selected.id),
+                      database: widget.database,
+                      client: selected,
+                      onSaved: _onSaved,
+                    ),
+                  _Selected() => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  _Empty() => EmptyPane(
+                      title: l10n.clientsNoneSelectedTitle,
+                      message: l10n.clientsNoneSelectedMessage,
+                      actionLabel: l10n.clientsNew,
+                      onAction: _startCreate,
+                    ),
+                },
+              );
             },
           ),
         ),
@@ -69,7 +123,7 @@ sealed class _Detail {
   const _Detail();
   const factory _Detail.empty() = _Empty;
   const factory _Detail.create() = _Create;
-  const factory _Detail.selected(_ClientDraft client) = _Selected;
+  const factory _Detail.selected(int id) = _Selected;
 }
 
 final class _Empty extends _Detail {
@@ -81,20 +135,8 @@ final class _Create extends _Detail {
 }
 
 final class _Selected extends _Detail {
-  const _Selected(this.client);
-  final _ClientDraft client;
-}
-
-class _ClientDraft {
-  const _ClientDraft({
-    required this.id,
-    required this.name,
-    required this.email,
-  });
-
-  final String id;
-  final String name;
-  final String email;
+  const _Selected(this.id);
+  final int id;
 }
 
 class _ClientList extends StatelessWidget {
@@ -105,9 +147,9 @@ class _ClientList extends StatelessWidget {
     required this.onCreate,
   });
 
-  final List<_ClientDraft> clients;
-  final String? selectedId;
-  final ValueChanged<_ClientDraft> onSelect;
+  final List<Client> clients;
+  final int? selectedId;
+  final ValueChanged<Client> onSelect;
   final VoidCallback onCreate;
 
   @override
@@ -131,7 +173,9 @@ class _ClientList extends StatelessWidget {
         return ListTile(
           selected: client.id == selectedId,
           selectedTileColor: Theme.of(context).colorScheme.primaryContainer,
-          title: Text(client.name),
+          title: Text(
+            client.name.isEmpty ? l10n.clientsEditorNew : client.name,
+          ),
           subtitle: Text(client.email),
           onTap: () => onSelect(client),
         );
@@ -140,53 +184,211 @@ class _ClientList extends StatelessWidget {
   }
 }
 
-class _ClientEditor extends StatelessWidget {
-  const _ClientEditor.create() : client = null;
-  const _ClientEditor.view(this.client);
+class _ClientEditor extends StatefulWidget {
+  const _ClientEditor({
+    super.key,
+    required this.database,
+    required this.client,
+    required this.onSaved,
+  });
 
-  final _ClientDraft? client;
+  final AppDatabase database;
+  final Client? client;
+  final ValueChanged<Client> onSaved;
+
+  @override
+  State<_ClientEditor> createState() => _ClientEditorState();
+}
+
+class _ClientEditorState extends State<_ClientEditor> {
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _phone = TextEditingController();
+  final _taxId = TextEditingController();
+  final _address = TextEditingController();
+  final _notes = TextEditingController();
+  late final LogoDraft _logo;
+
+  var _saving = false;
+  var _importing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final client = widget.client;
+    final category = client == null
+        ? MediaStore.newClientLogoCategory()
+        : (MediaStore.categoryFromStoredPath(client.logoPath) ??
+            MediaStore.clientLogoCategory(client.id));
+    _logo = LogoDraft(category: category, storedPath: client?.logoPath);
+    _applyClient(client);
+    unawaited(_logo.discardStaging());
+  }
+
+  @override
+  void dispose() {
+    unawaited(_logo.discardStaging());
+    _name.dispose();
+    _email.dispose();
+    _phone.dispose();
+    _taxId.dispose();
+    _address.dispose();
+    _notes.dispose();
+    super.dispose();
+  }
+
+  void _applyClient(Client? client) {
+    _name.text = client?.name ?? '';
+    _email.text = client?.email ?? '';
+    _phone.text = client?.phone ?? '';
+    _taxId.text = client?.taxId ?? '';
+    _address.text = client?.address ?? '';
+    _notes.text = client?.notes ?? '';
+    _logo.resetFromStored(client?.logoPath);
+  }
+
+  ClientsCompanion _fields({required String? logoPath}) {
+    return ClientsCompanion(
+      name: Value(_name.text.trim()),
+      email: Value(_email.text.trim()),
+      phone: Value(_phone.text.trim()),
+      taxId: Value(_taxId.text.trim()),
+      address: Value(_address.text.trim()),
+      notes: Value(_notes.text.trim()),
+      logoPath: Value(logoPath),
+    );
+  }
+
+  Future<void> _pickLogo() async {
+    setState(() => _importing = true);
+    try {
+      final picked = await _logo.pick();
+      if (!picked || !mounted) {
+        return;
+      }
+      setState(() {});
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).logoImportFailed)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _importing = false);
+      }
+    }
+  }
+
+  Future<void> _removeLogo() async {
+    await _logo.clear();
+    setState(() {});
+  }
+
+  Future<void> _save() async {
+    if (_saving) {
+      return;
+    }
+
+    setState(() => _saving = true);
+    final l10n = AppLocalizations.of(context);
+    final isNew = widget.client == null;
+    try {
+      final outcome = await LogoSave.run<Client>(
+        category: _logo.category,
+        previousLogo: _logo.storedPath,
+        cleared: _logo.cleared,
+        hasStaged: _logo.hasStaged,
+        persist: (nextLogo) {
+          return widget.database.saveClient(
+            id: widget.client?.id,
+            data: _fields(logoPath: nextLogo),
+          );
+        },
+      );
+
+      if (!mounted) {
+        return;
+      }
+      setState(() => _logo.acceptSaved(outcome.nextLogo));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isNew ? l10n.clientsCreated : l10n.clientsSaved),
+        ),
+      );
+      widget.onSaved(outcome.value);
+    } on FormatException {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.logoImportFailed)),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.clientsSaveFailed)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
-    final isNew = client == null;
+    final isNew = widget.client == null;
+    final previewPath = _logo.previewPath;
+    final busy = _saving || _importing;
+    final client = widget.client;
+    final title = (client == null || client.name.isEmpty)
+        ? l10n.clientsEditorNew
+        : client.name;
 
     return FormPageBody(
       child: Column(
         crossAxisAlignment: .start,
         children: [
-          Text(
-            isNew ? l10n.clientsEditorNew : client!.name,
-            style: textTheme.headlineMedium,
-          ),
+          Text(title, style: textTheme.headlineMedium),
           const SizedBox(height: 6),
           Text(l10n.clientsEditorHint, style: textTheme.bodyMedium),
           const SizedBox(height: 24),
           FieldGrid(
             children: [
               TextField(
+                controller: _name,
                 decoration: InputDecoration(labelText: l10n.clientsFieldName),
               ),
               TextField(
+                controller: _email,
                 decoration: InputDecoration(labelText: l10n.clientsFieldEmail),
               ),
               TextField(
+                controller: _phone,
                 decoration: InputDecoration(labelText: l10n.clientsFieldPhone),
               ),
               TextField(
+                controller: _taxId,
                 decoration: InputDecoration(labelText: l10n.clientsFieldTax),
               ),
             ],
           ),
           const SizedBox(height: 16),
           TextField(
+            controller: _address,
             decoration: InputDecoration(labelText: l10n.clientsFieldAddress),
             minLines: 3,
             maxLines: 4,
           ),
           const SizedBox(height: 16),
           TextField(
+            controller: _notes,
             decoration: InputDecoration(labelText: l10n.clientsFieldNotes),
             minLines: 2,
             maxLines: 3,
@@ -196,12 +398,17 @@ class _ClientEditor extends StatelessWidget {
             title: l10n.clientsLogoTitle,
             subtitle: l10n.clientsLogoSubtitle,
             icon: Icons.image_outlined,
+            imagePath: previewPath,
+            uploadLabel: l10n.logoUpload,
+            removeLabel: l10n.logoRemove,
+            onUpload: busy ? null : _pickLogo,
+            onRemove: (busy || previewPath == null) ? null : _removeLogo,
           ),
           const SizedBox(height: 24),
           Row(
             children: [
               FilledButton(
-                onPressed: () {},
+                onPressed: busy ? null : _save,
                 child: Text(isNew ? l10n.clientsCreate : l10n.clientsSave),
               ),
               const SizedBox(width: 8),

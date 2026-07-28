@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' show Value;
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import 'package:invoices/data/app_database.dart';
-import 'package:invoices/data/media_store.dart';
+import 'package:invoices/data/logo_draft.dart';
+import 'package:invoices/data/logo_save.dart';
 import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/widgets/page_chrome.dart';
 
@@ -26,14 +28,11 @@ class _CompanyPageState extends State<CompanyPage> {
   final _address = TextEditingController();
   final _payment = TextEditingController();
   final _notes = TextEditingController();
+  final _logo = LogoDraft(category: _logoCategory);
 
   var _loading = true;
   var _saving = false;
   var _importing = false;
-
-  String? _logoPath;
-  String? _stagedLogoPath;
-  var _logoCleared = false;
 
   @override
   void initState() {
@@ -43,6 +42,7 @@ class _CompanyPageState extends State<CompanyPage> {
 
   @override
   void dispose() {
+    unawaited(_logo.discardStaging());
     _name.dispose();
     _email.dispose();
     _phone.dispose();
@@ -51,17 +51,6 @@ class _CompanyPageState extends State<CompanyPage> {
     _payment.dispose();
     _notes.dispose();
     super.dispose();
-  }
-
-  String? get _previewPath {
-    final staged = _stagedLogoPath;
-    if (staged != null) {
-      return MediaStore.absolutePath(staged);
-    }
-    if (_logoCleared || _logoPath == null) {
-      return null;
-    }
-    return MediaStore.absolutePath(_logoPath!);
   }
 
   Future<void> _load() async {
@@ -77,10 +66,8 @@ class _CompanyPageState extends State<CompanyPage> {
       _address.text = company.address;
       _payment.text = company.paymentDetails;
       _notes.text = company.notes;
-      _logoPath = company.logoPath;
-      _stagedLogoPath = null;
-      _logoCleared = false;
-      await MediaStore.discardStagedLogo(category: _logoCategory);
+      _logo.resetFromStored(company.logoPath);
+      await _logo.discardStaging();
     } catch (_) {
       if (!mounted) {
         return;
@@ -96,36 +83,13 @@ class _CompanyPageState extends State<CompanyPage> {
   }
 
   Future<void> _pickLogo() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: MediaStore.allowedExtensions,
-      allowMultiple: false,
-    );
-    final sourcePath = result?.files.single.path;
-    if (sourcePath == null) {
-      return;
-    }
-
     setState(() => _importing = true);
     try {
-      final staged = await MediaStore.stageImage(
-        sourcePath: sourcePath,
-        category: _logoCategory,
-      );
-      if (!mounted) {
+      final picked = await _logo.pick();
+      if (!picked || !mounted) {
         return;
       }
-      setState(() {
-        _stagedLogoPath = staged;
-        _logoCleared = false;
-      });
-    } on FormatException {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).logoImportFailed)),
-      );
+      setState(() {});
     } catch (_) {
       if (!mounted) {
         return;
@@ -141,11 +105,8 @@ class _CompanyPageState extends State<CompanyPage> {
   }
 
   Future<void> _removeLogo() async {
-    await MediaStore.discardStagedLogo(category: _logoCategory);
-    setState(() {
-      _stagedLogoPath = null;
-      _logoCleared = true;
-    });
+    await _logo.clear();
+    setState(() {});
   }
 
   Future<void> _save() async {
@@ -155,51 +116,36 @@ class _CompanyPageState extends State<CompanyPage> {
 
     setState(() => _saving = true);
     final l10n = AppLocalizations.of(context);
-    final previousLogo = _logoPath;
-    String? committedLogo;
     try {
-      String? nextLogo = previousLogo;
-
-      if (_logoCleared) {
-        nextLogo = null;
-      } else if (_stagedLogoPath != null) {
-        committedLogo = await MediaStore.commitStagedLogo(category: _logoCategory);
-        nextLogo = committedLogo;
-      }
-
-      await widget.database.saveCompany(
-        CompanyProfilesCompanion(
-          name: Value(_name.text.trim()),
-          email: Value(_email.text.trim()),
-          phone: Value(_phone.text.trim()),
-          taxId: Value(_taxId.text.trim()),
-          address: Value(_address.text.trim()),
-          paymentDetails: Value(_payment.text.trim()),
-          notes: Value(_notes.text.trim()),
-          logoPath: Value(nextLogo),
-        ),
+      final outcome = await LogoSave.run<void>(
+        category: _logo.category,
+        previousLogo: _logo.storedPath,
+        cleared: _logo.cleared,
+        hasStaged: _logo.hasStaged,
+        persist: (nextLogo) async {
+          await widget.database.saveCompany(
+            CompanyProfilesCompanion(
+              name: Value(_name.text.trim()),
+              email: Value(_email.text.trim()),
+              phone: Value(_phone.text.trim()),
+              taxId: Value(_taxId.text.trim()),
+              address: Value(_address.text.trim()),
+              paymentDetails: Value(_payment.text.trim()),
+              notes: Value(_notes.text.trim()),
+              logoPath: Value(nextLogo),
+            ),
+          );
+        },
       );
-
-      if (previousLogo != null && previousLogo != nextLogo) {
-        await MediaStore.deleteStored(previousLogo);
-      }
-
-      setState(() {
-        _logoPath = nextLogo;
-        _stagedLogoPath = null;
-        _logoCleared = false;
-      });
 
       if (!mounted) {
         return;
       }
+      setState(() => _logo.acceptSaved(outcome.nextLogo));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.companySaved)),
       );
     } on FormatException {
-      if (committedLogo != null && committedLogo != previousLogo) {
-        await MediaStore.deleteStored(committedLogo);
-      }
       if (!mounted) {
         return;
       }
@@ -207,9 +153,6 @@ class _CompanyPageState extends State<CompanyPage> {
         SnackBar(content: Text(l10n.logoImportFailed)),
       );
     } catch (_) {
-      if (committedLogo != null && committedLogo != previousLogo) {
-        await MediaStore.deleteStored(committedLogo);
-      }
       if (!mounted) {
         return;
       }
@@ -227,7 +170,7 @@ class _CompanyPageState extends State<CompanyPage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
-    final previewPath = _previewPath;
+    final previewPath = _logo.previewPath;
     final busy = _saving || _importing;
 
     return Column(

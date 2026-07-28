@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:invoices/config/app_config.dart';
 import 'package:invoices/data/app_database.dart';
@@ -10,7 +11,6 @@ import 'package:invoices/theme/theme_definition.dart';
 void main() {
   testWidgets('Shows invoices shell home', (WidgetTester tester) async {
     final database = AppDatabase.memory();
-    addTearDown(database.close);
 
     await tester.pumpWidget(
       InvoicesApp(
@@ -22,11 +22,15 @@ void main() {
         database: database,
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     expect(find.text('New invoice'), findsWidgets);
     expect(find.text('Clients'), findsOneWidget);
-    expect(find.text('Company'), findsOneWidget);
+    expect(find.text('Your company'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
+
+    // Dispose Drift StreamBuilders, then advance time so cancel timers flush.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
   });
 }
