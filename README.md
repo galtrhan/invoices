@@ -134,6 +134,12 @@ Built-in **English** is always available (defined in Dart under `lib/l10n/`). Cu
 - `name` — shown in Settings and stored as `localization`
 - `strings` — map of message keys to translated text
 
+Optional field:
+
+- `locale_code` — BCP 47 locale tag (for example `lv-LV`, `de-DE`). The app uses the ISO 639-1 language part for PDF **amount in words** via [num2text](https://pub.dev/packages/num2text). Without `locale_code`, the app uses the built-in English amount-in-words formatter. UI strings still come from `strings`. Built-in English does not need this field.
+
+Supported language codes for amount in words: `en`, `lv`, `fr`, `de`, `es`, `it`, `pt`, `nl`, `fi`, `lt`, `sk`, `sl`, `hr`, `el`. Other codes fall back to English.
+
 Override only the keys you need. For missing keys, the app uses English at load time.
 
 Message keys match the `strings` map in `LocalizationDefinition.builtinEnglish`. See `lib/l10n/localization_definition.dart` for the full key list (for example `nav_invoices`, `settings_title`, `settings_pdf_template`).
@@ -143,6 +149,7 @@ Shipped pack: **Latviešu** (`config/localizations/latvian.json`).
 ```json
 {
   "name": "Example",
+  "locale_code": "lv-LV",
   "strings": {
     "nav_invoices": "Invoices",
     "settings_title": "Settings"
