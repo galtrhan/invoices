@@ -69,7 +69,14 @@ class LocalizationDefinition {
   String get invoicesSectionHistory => _('invoices_section_history');
   String get invoicesSectionHistoryBody => _('invoices_section_history_body');
   String get invoicesSave => _('invoices_save');
-  String get invoicesPreview => _('invoices_preview');
+  String get invoicesExport => _('invoices_export');
+  String get invoicesExportLanguage => _('invoices_export_language');
+  String get invoicesExported => _('invoices_exported');
+  String get invoicesExportFailed => _('invoices_export_failed');
+  String get invoicesExportSaveFirst => _('invoices_export_save_first');
+  String get invoicesPreviewTitle => _('invoices_preview_title');
+  String get invoicesPreviewSave => _('invoices_preview_save');
+  String get invoicesPreviewCancel => _('invoices_preview_cancel');
   String get invoicesFieldNumber => _('invoices_field_number');
   String get invoicesFieldIssued => _('invoices_field_issued');
   String get invoicesFieldDescription => _('invoices_field_description');
@@ -92,6 +99,24 @@ class LocalizationDefinition {
   String get invoicesDeleted => _('invoices_deleted');
   String get invoicesDeleteFailed => _('invoices_delete_failed');
   String get invoicesRemoveJobLine => _('invoices_remove_job_line');
+
+  // Invoice PDF
+  String get pdfInvoiceTitle => _('pdf_invoice_title');
+  String get pdfNumberPrefix => _('pdf_number_prefix');
+  String get pdfRegNo => _('pdf_reg_no');
+  String get pdfPayer => _('pdf_payer');
+  String get pdfTel => _('pdf_tel');
+  String get pdfEmail => _('pdf_email');
+  String get pdfService => _('pdf_service');
+  String get pdfUnit => _('pdf_unit');
+  String get pdfAmount => _('pdf_amount');
+  String get pdfPrice => _('pdf_price');
+  String get pdfSumHeader => _('pdf_sum_header');
+  String get pdfPayBy => _('pdf_pay_by');
+  String get pdfSum => _('pdf_sum');
+  String get pdfPaymentAmount => _('pdf_payment_amount');
+  String get pdfAmountInWords => _('pdf_amount_in_words');
+  String get pdfElectronicFooter => _('pdf_electronic_footer');
 
   // Clients
   String get clientsTitle => _('clients_title');
@@ -219,7 +244,14 @@ class LocalizationDefinition {
       'invoices_section_history_body':
           'When regenerating: default = as saved at invoice time. Optional = use current client/company data.',
       'invoices_save': 'Save invoice',
-      'invoices_preview': 'Preview',
+      'invoices_export': 'Export',
+      'invoices_export_language': 'PDF language',
+      'invoices_exported': 'Invoice PDF saved',
+      'invoices_export_failed': 'Could not export invoice PDF',
+      'invoices_export_save_first': 'Save the invoice before you export.',
+      'invoices_preview_title': 'Preview invoice',
+      'invoices_preview_save': 'Save',
+      'invoices_preview_cancel': 'Cancel',
       'invoices_field_number': 'Invoice number',
       'invoices_field_issued': 'Issue date',
       'invoices_field_description': 'Description',
@@ -244,6 +276,23 @@ class LocalizationDefinition {
       'invoices_deleted': 'Invoice deleted',
       'invoices_delete_failed': 'Could not delete invoice',
       'invoices_remove_job_line': 'Remove',
+      'pdf_invoice_title': 'INVOICE',
+      'pdf_number_prefix': 'No.',
+      'pdf_reg_no': 'Reg. No.:',
+      'pdf_payer': 'Payer:',
+      'pdf_tel': 'Tel:',
+      'pdf_email': 'E.mail:',
+      'pdf_service': 'Service',
+      'pdf_unit': 'Unit',
+      'pdf_amount': 'Amount',
+      'pdf_price': 'Price',
+      'pdf_sum_header': 'SUM',
+      'pdf_pay_by': 'Pay by:',
+      'pdf_sum': 'Sum:',
+      'pdf_payment_amount': 'Payment amount:',
+      'pdf_amount_in_words': 'Amount in words:',
+      'pdf_electronic_footer':
+          'The invoice has been prepared electronically and is valid without a signature',
       'clients_title': 'Clients',
       'clients_subtitle': 'Invoice parties with contact details and logo',
       'clients_new': 'New client',

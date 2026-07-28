@@ -98,18 +98,18 @@ class _InvoicesAppState extends State<InvoicesApp> {
     final selectedLocale =
         widget.localizations.resolve(_config.localization);
 
-    return MaterialApp(
-      title: AppInfo.name,
-      debugShowCheckedModeBanner: false,
-      theme: selectedTheme.lightTheme,
-      darkTheme: selectedTheme.darkTheme,
-      themeMode: switch (_config.theme) {
-        AppThemePreference.dark => ThemeMode.dark,
-        AppThemePreference.light => ThemeMode.light,
-      },
-      home: AppLocalizations(
-        strings: selectedLocale,
-        child: AppShell(
+    return AppLocalizations(
+      strings: selectedLocale,
+      child: MaterialApp(
+        title: AppInfo.name,
+        debugShowCheckedModeBanner: false,
+        theme: selectedTheme.lightTheme,
+        darkTheme: selectedTheme.darkTheme,
+        themeMode: switch (_config.theme) {
+          AppThemePreference.dark => ThemeMode.dark,
+          AppThemePreference.light => ThemeMode.light,
+        },
+        home: AppShell(
           config: _config,
           themes: widget.themes,
           localizations: widget.localizations,

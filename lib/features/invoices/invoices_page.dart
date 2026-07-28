@@ -1,10 +1,16 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:drift/drift.dart' show Value;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:invoices/data/app_database.dart';
+import 'package:invoices/data/media_store.dart';
+import 'package:invoices/features/invoices/invoice_pdf.dart';
+import 'package:invoices/features/invoices/invoice_pdf_preview_page.dart';
+import 'package:invoices/l10n/localization_catalog.dart';
 import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/widgets/master_detail.dart';
 import 'package:invoices/widgets/page_chrome.dart';
@@ -18,6 +24,20 @@ String _formatDate(DateTime date) {
 
 String _formatMoney(double value) => value.toStringAsFixed(2);
 
+ByteData? _cachedInvoicePdfFontRegular;
+ByteData? _cachedInvoicePdfFontBold;
+
+Future<({ByteData regular, ByteData bold})> _loadInvoicePdfFonts() async {
+  _cachedInvoicePdfFontRegular ??=
+      await rootBundle.load('assets/fonts/DejaVuSans.ttf');
+  _cachedInvoicePdfFontBold ??=
+      await rootBundle.load('assets/fonts/DejaVuSans-Bold.ttf');
+  return (
+    regular: _cachedInvoicePdfFontRegular!,
+    bold: _cachedInvoicePdfFontBold!,
+  );
+}
+
 /// Returns null when [raw] is not empty and not a number.
 double? _tryParseAmount(String raw) {
   final normalized = raw.trim().replaceAll(',', '.');
@@ -28,9 +48,14 @@ double? _tryParseAmount(String raw) {
 }
 
 class InvoicesPage extends StatefulWidget {
-  const InvoicesPage({super.key, required this.database});
+  const InvoicesPage({
+    super.key,
+    required this.database,
+    required this.localizations,
+  });
 
   final AppDatabase database;
+  final LocalizationCatalog localizations;
 
   @override
   State<InvoicesPage> createState() => _InvoicesPageState();
@@ -103,12 +128,14 @@ class _InvoicesPageState extends State<InvoicesPage> {
                   _Create() => _InvoiceEditor(
                       key: const ValueKey('new'),
                       database: widget.database,
+                      localizations: widget.localizations,
                       invoice: null,
                       onSaved: _select,
                     ),
                   _Selected() when selected != null => _InvoiceEditor(
                       key: ValueKey(selected.id),
                       database: widget.database,
+                      localizations: widget.localizations,
                       invoice: selected,
                       onSaved: _select,
                       onDeleted: () =>
@@ -249,12 +276,14 @@ class _InvoiceEditor extends StatefulWidget {
   const _InvoiceEditor({
     super.key,
     required this.database,
+    required this.localizations,
     required this.invoice,
     required this.onSaved,
     this.onDeleted,
   });
 
   final AppDatabase database;
+  final LocalizationCatalog localizations;
   final Invoice? invoice;
   final ValueChanged<Invoice> onSaved;
   final VoidCallback? onDeleted;
@@ -274,6 +303,7 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
   var _loading = true;
   var _saving = false;
   var _deleting = false;
+  var _exporting = false;
   var _numberReady = false;
 
   @override
@@ -546,13 +576,142 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
     }
   }
 
+  Future<void> _exportPdf(LocalizationDefinition exportL10n) async {
+    if (_exporting) {
+      return;
+    }
+
+    final uiL10n = AppLocalizations.of(context);
+    final invoice = widget.invoice;
+    if (invoice == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(uiL10n.invoicesExportSaveFirst)),
+      );
+      return;
+    }
+
+    final lineInputs = <InvoicePdfLine>[];
+    for (final line in _lines) {
+      final input = line.toInput();
+      if (input == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(uiL10n.invoicesInvalidAmount)),
+        );
+        return;
+      }
+      lineInputs.add(
+        InvoicePdfLine(
+          description: input.description,
+          quantity: input.quantity,
+          unitPrice: input.unitPrice,
+        ),
+      );
+    }
+
+    setState(() => _exporting = true);
+    try {
+      final number =
+          _number.text.trim().isEmpty ? invoice.number : _number.text.trim();
+      final clientName = invoice.clientName;
+      final logoBytes = await _readLogoBytes(invoice.companyLogoPath);
+      final fonts = await _loadInvoicePdfFonts();
+      final bytes = await buildInvoicePdf(
+        InvoicePdfData(
+          number: number,
+          issuedOn: _issuedOn,
+          dueOn: _issuedOn.add(const Duration(days: 10)),
+          companyName: invoice.companyName,
+          companyTaxId: invoice.companyTaxId,
+          companyAddress: invoice.companyAddress,
+          companyPaymentDetails: invoice.companyPaymentDetails,
+          logoBytes: logoBytes,
+          fontRegular: fonts.regular,
+          fontBold: fonts.bold,
+          clientName: clientName,
+          clientTaxId: invoice.clientTaxId,
+          clientAddress: invoice.clientAddress,
+          clientPhone: invoice.clientPhone,
+          clientEmail: invoice.clientEmail,
+          lines: lineInputs,
+          labels: InvoicePdfLabels.fromLocalization(exportL10n),
+        ),
+      );
+
+      final suggested = invoicePdfFileName(
+        number: number,
+        issuedOn: _issuedOn,
+        clientName: clientName,
+        languageName: exportL10n.name,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      final shouldSave = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => InvoicePdfPreviewPage(
+            bytes: bytes,
+            fileName: suggested,
+          ),
+        ),
+      );
+
+      if (!mounted || shouldSave != true) {
+        return;
+      }
+
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: uiL10n.invoicesExport,
+        fileName: suggested,
+        type: FileType.custom,
+        allowedExtensions: const ['pdf'],
+      );
+
+      if (!mounted || path == null) {
+        return;
+      }
+
+      final file = File(path.endsWith('.pdf') ? path : '$path.pdf');
+      await file.writeAsBytes(bytes, flush: true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(uiL10n.invoicesExported)),
+        );
+      }
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(uiL10n.invoicesExportFailed)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _exporting = false);
+      }
+    }
+  }
+
+  Future<Uint8List?> _readLogoBytes(String? storedPath) async {
+    if (storedPath == null || storedPath.trim().isEmpty) {
+      return null;
+    }
+    final file = File(MediaStore.absolutePath(storedPath));
+    if (!await file.exists()) {
+      return null;
+    }
+    return file.readAsBytes();
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final isNew = widget.invoice == null;
-    final busy = _saving || _deleting || _loading;
+    final busy = _saving || _deleting || _loading || _exporting;
 
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -732,9 +891,42 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
                 child: Text(l10n.invoicesSave),
               ),
               const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: null,
-                child: Text(l10n.invoicesPreview),
+              MenuAnchor(
+                builder: (context, controller, child) {
+                  return OutlinedButton(
+                    onPressed: busy || isNew
+                        ? null
+                        : () {
+                            if (controller.isOpen) {
+                              controller.close();
+                            } else {
+                              controller.open();
+                            }
+                          },
+                    child: Row(
+                      mainAxisSize: .min,
+                      children: [
+                        Text(l10n.invoicesExport),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.arrow_drop_down, size: 18),
+                      ],
+                    ),
+                  );
+                },
+                menuChildren: [
+                  Padding(
+                    padding: const .fromLTRB(12, 8, 12, 4),
+                    child: Text(
+                      l10n.invoicesExportLanguage,
+                      style: textTheme.labelMedium,
+                    ),
+                  ),
+                  for (final pack in widget.localizations.localizations)
+                    MenuItemButton(
+                      onPressed: () => _exportPdf(pack),
+                      child: Text(pack.name),
+                    ),
+                ],
               ),
               if (!isNew) ...[
                 const Spacer(),
