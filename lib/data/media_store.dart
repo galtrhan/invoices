@@ -104,6 +104,20 @@ class MediaStore {
     }
   }
 
+  /// Removes `media/<category>/`. Evicts direct files, then deletes the folder.
+  static Future<void> deleteCategory(String category) async {
+    final dir = Directory(p.join(AppConfig.mediaDirectory, category));
+    if (!await dir.exists()) {
+      return;
+    }
+    await for (final entity in dir.list()) {
+      if (entity is File) {
+        await FileImage(entity).evict();
+      }
+    }
+    await dir.delete(recursive: true);
+  }
+
   static Future<void> deleteReplacedLogo(String? previous, String? next) async {
     if (previous != null && previous != next) {
       await deleteStored(previous);

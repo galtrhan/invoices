@@ -82,6 +82,13 @@
     "clients_save_failed": "Neizdevās saglabāt klientu",
     "clients_load_failed": "Neizdevās ielādēt klientus",
     "clients_view_history": "Skatīt vēsturi",
+    "clients_delete": "Dzēst klientu",
+    "clients_delete_confirm_title": "Dzēst šo klientu?",
+    "clients_delete_confirm_body":
+        "Šis noņem klientu un tā logotipu. Iepriekšējie rēķini saglabā savus datus.",
+    "clients_delete_confirm_action": "Dzēst",
+    "clients_deleted": "Klients dzēsts",
+    "clients_delete_failed": "Neizdevās dzēst klientu",
     "company_title": "Uzņēmums",
     "company_subtitle": "Jūsu uzņēmuma dati rēķina galvenei",
     "company_profile": "Uzņēmuma profils",

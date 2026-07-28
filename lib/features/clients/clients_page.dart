@@ -11,6 +11,13 @@ import 'package:invoices/l10n/localization_definition.dart';
 import 'package:invoices/widgets/master_detail.dart';
 import 'package:invoices/widgets/page_chrome.dart';
 
+ButtonStyle _destructiveStyle(ColorScheme scheme) {
+  return FilledButton.styleFrom(
+    backgroundColor: scheme.error,
+    foregroundColor: scheme.onError,
+  );
+}
+
 class ClientsPage extends StatefulWidget {
   const ClientsPage({super.key, required this.database});
 
@@ -40,6 +47,10 @@ class _ClientsPageState extends State<ClientsPage> {
 
   void _onSaved(Client client) {
     setState(() => _detail = _Detail.selected(client.id));
+  }
+
+  void _onDeleted() {
+    setState(() => _detail = const _Detail.empty());
   }
 
   @override
@@ -99,6 +110,7 @@ class _ClientsPageState extends State<ClientsPage> {
                       database: widget.database,
                       client: selected,
                       onSaved: _onSaved,
+                      onDeleted: _onDeleted,
                     ),
                   _Selected() => const Center(
                       child: CircularProgressIndicator(),
@@ -190,11 +202,13 @@ class _ClientEditor extends StatefulWidget {
     required this.database,
     required this.client,
     required this.onSaved,
+    this.onDeleted,
   });
 
   final AppDatabase database;
   final Client? client;
   final ValueChanged<Client> onSaved;
+  final VoidCallback? onDeleted;
 
   @override
   State<_ClientEditor> createState() => _ClientEditorState();
@@ -211,6 +225,7 @@ class _ClientEditorState extends State<_ClientEditor> {
 
   var _saving = false;
   var _importing = false;
+  var _deleting = false;
 
   @override
   void initState() {
@@ -339,13 +354,75 @@ class _ClientEditorState extends State<_ClientEditor> {
     }
   }
 
+  Future<void> _delete() async {
+    final client = widget.client;
+    if (client == null || _deleting) {
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.clientsDeleteConfirmTitle),
+          content: Text(l10n.clientsDeleteConfirmBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.settingsCancel),
+            ),
+            FilledButton(
+              style: _destructiveStyle(scheme),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.clientsDeleteConfirmAction),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    setState(() => _deleting = true);
+    try {
+      await widget.database.deleteClient(client.id);
+      // Logo cleanup is best-effort after the row is gone.
+      try {
+        await MediaStore.deleteCategory(_logo.category);
+      } catch (_) {}
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.clientsDeleted)),
+      );
+      widget.onDeleted?.call();
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.clientsDeleteFailed)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _deleting = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
     final isNew = widget.client == null;
     final previewPath = _logo.previewPath;
-    final busy = _saving || _importing;
+    final busy = _saving || _importing || _deleting;
     final client = widget.client;
     final title = (client == null || client.name.isEmpty)
         ? l10n.clientsEditorNew
@@ -411,12 +488,19 @@ class _ClientEditorState extends State<_ClientEditor> {
                 onPressed: busy ? null : _save,
                 child: Text(isNew ? l10n.clientsCreate : l10n.clientsSave),
               ),
-              const SizedBox(width: 8),
-              if (!isNew)
+              if (!isNew) ...[
+                const SizedBox(width: 8),
                 OutlinedButton(
                   onPressed: () {},
                   child: Text(l10n.clientsViewHistory),
                 ),
+                const Spacer(),
+                FilledButton(
+                  style: _destructiveStyle(scheme),
+                  onPressed: busy ? null : _delete,
+                  child: Text(l10n.clientsDelete),
+                ),
+              ],
             ],
           ),
         ],

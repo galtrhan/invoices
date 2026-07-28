@@ -96,6 +96,12 @@ class LocalizationDefinition {
   String get clientsSaveFailed => _('clients_save_failed');
   String get clientsLoadFailed => _('clients_load_failed');
   String get clientsViewHistory => _('clients_view_history');
+  String get clientsDelete => _('clients_delete');
+  String get clientsDeleteConfirmTitle => _('clients_delete_confirm_title');
+  String get clientsDeleteConfirmBody => _('clients_delete_confirm_body');
+  String get clientsDeleteConfirmAction => _('clients_delete_confirm_action');
+  String get clientsDeleted => _('clients_deleted');
+  String get clientsDeleteFailed => _('clients_delete_failed');
   String get logoUpload => _('logo_upload');
   String get logoRemove => _('logo_remove');
   String get logoImportFailed => _('logo_import_failed');
@@ -221,6 +227,13 @@ class LocalizationDefinition {
       'clients_save_failed': 'Could not save client',
       'clients_load_failed': 'Could not load clients',
       'clients_view_history': 'View history',
+      'clients_delete': 'Delete client',
+      'clients_delete_confirm_title': 'Delete this client?',
+      'clients_delete_confirm_body':
+          'This removes the client and its logo. Past invoices keep their saved details.',
+      'clients_delete_confirm_action': 'Delete',
+      'clients_deleted': 'Client deleted',
+      'clients_delete_failed': 'Could not delete client',
       'company_title': 'Company',
       'company_subtitle': 'Your business details for the invoice header',
       'company_profile': 'Business profile',

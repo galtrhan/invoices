@@ -126,6 +126,10 @@ class AppDatabase extends _$AppDatabase {
     return rows.single;
   }
 
+  Future<void> deleteClient(int id) {
+    return (delete(clients)..where((row) => row.id.equals(id))).go();
+  }
+
   Future<void> clearAllData() {
     return transaction(() async {
       await delete(clients).go();
