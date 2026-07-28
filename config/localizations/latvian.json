@@ -49,8 +49,6 @@
     "invoices_editor_view_hint": "Pēc noklusējuma tiek izmantots saglabātais klienta un uzņēmuma momentuzņēmums.",
     "invoices_section_client": "Klients",
     "invoices_section_client_body": "Atlasiet klientu. Iepriekšējie rēķini saglabā klienta datus no izdošanas brīža; regenerējot varat pārslēgties uz pašreizējiem datiem.",
-    "invoices_section_company": "Uzņēmums",
-    "invoices_section_company_body": "Uzņēmuma dati tiek ņemti no sadaļas Uzņēmums un ierakstīti šajā rēķinā kā momentuzņēmums.",
     "invoices_section_jobs": "Darbi",
     "invoices_section_jobs_body": "Pievienojiet rindas ar aprakstu, daudzumu un cenu.",
     "invoices_add_job_line": "Pievienot darba rindu",
@@ -79,7 +77,6 @@
     "invoices_client_required": "Pirms saglabāšanas atlasiet klientu.",
     "invoices_invalid_amount":
       "Ievadiet derīgus skaitļus daudzumam un vienības cenai.",
-    "invoices_company_empty": "Vēl nav uzņēmuma datu. Iestatiet tos sadaļā Uzņēmums.",
     "invoices_created": "Rēķins izveidots",
     "invoices_saved": "Rēķins saglabāts",
     "invoices_save_failed": "Neizdevās saglabāt rēķinu",

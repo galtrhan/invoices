@@ -1,6 +1,7 @@
 {
   "window_decorations": true,
   "theme": "dark",
-  "color_theme": "Gruvbox",
-  "localization": "Latviešu"
+  "color_theme": "Nord",
+  "localization": "Latviešu",
+  "pdf_template": "Default"
 }

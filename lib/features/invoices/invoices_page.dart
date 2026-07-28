@@ -22,7 +22,7 @@ String _formatDate(DateTime date) {
   final y = date.year.toString().padLeft(4, '0');
   final m = date.month.toString().padLeft(2, '0');
   final d = date.day.toString().padLeft(2, '0');
-  return '$y-$m-$d';
+  return '$y.$m.$d';
 }
 
 String _formatMoney(double value) => value.toStringAsFixed(2);
@@ -311,7 +311,6 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
   final _number = TextEditingController();
   final _lines = <_JobLineDraft>[];
   late Stream<List<Client>> _clientsStream = widget.database.watchClients();
-  late Stream<CompanyProfile> _companyStream = widget.database.watchCompany();
 
   DateTime _issuedOn = DateTime.now();
   int? _clientId;
@@ -332,7 +331,6 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.database, widget.database)) {
       _clientsStream = widget.database.watchClients();
-      _companyStream = widget.database.watchCompany();
     }
   }
 
@@ -888,38 +886,6 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
           ),
           const SizedBox(height: 16),
           SectionPanel(
-            title: l10n.invoicesSectionCompany,
-            child: Column(
-              crossAxisAlignment: .stretch,
-              children: [
-                Text(l10n.invoicesSectionCompanyBody),
-                const SizedBox(height: 12),
-                if (isNew)
-                  StreamBuilder<CompanyProfile>(
-                    stream: _companyStream,
-                    builder: (context, snapshot) {
-                      final company =
-                          snapshot.data ?? AppDatabase.emptyCompany;
-                      return _CompanySummary(
-                        name: company.name,
-                        email: company.email,
-                        address: company.address,
-                        emptyLabel: l10n.invoicesCompanyEmpty,
-                      );
-                    },
-                  )
-                else
-                  _CompanySummary(
-                    name: widget.invoice!.companyName,
-                    email: widget.invoice!.companyEmail,
-                    address: widget.invoice!.companyAddress,
-                    emptyLabel: l10n.invoicesCompanyEmpty,
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          SectionPanel(
             title: l10n.invoicesSectionJobs,
             child: Column(
               crossAxisAlignment: .stretch,
@@ -986,33 +952,6 @@ class _InvoiceEditorState extends State<_InvoiceEditor> {
         ],
       ),
     );
-  }
-}
-
-class _CompanySummary extends StatelessWidget {
-  const _CompanySummary({
-    required this.name,
-    required this.email,
-    required this.address,
-    required this.emptyLabel,
-  });
-
-  final String name;
-  final String email;
-  final String address;
-  final String emptyLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final parts = <String>[
-      if (name.trim().isNotEmpty) name.trim(),
-      if (email.trim().isNotEmpty) email.trim(),
-      if (address.trim().isNotEmpty) address.trim(),
-    ];
-    if (parts.isEmpty) {
-      return Text(emptyLabel);
-    }
-    return Text(parts.join('\n'));
   }
 }
 

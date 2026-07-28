@@ -64,8 +64,6 @@ class LocalizationDefinition {
   String get invoicesEditorViewHint => _('invoices_editor_view_hint');
   String get invoicesSectionClient => _('invoices_section_client');
   String get invoicesSectionClientBody => _('invoices_section_client_body');
-  String get invoicesSectionCompany => _('invoices_section_company');
-  String get invoicesSectionCompanyBody => _('invoices_section_company_body');
   String get invoicesSectionJobs => _('invoices_section_jobs');
   String get invoicesSectionJobsBody => _('invoices_section_jobs_body');
   String get invoicesAddJobLine => _('invoices_add_job_line');
@@ -93,7 +91,6 @@ class LocalizationDefinition {
   String get invoicesNoClients => _('invoices_no_clients');
   String get invoicesClientRequired => _('invoices_client_required');
   String get invoicesInvalidAmount => _('invoices_invalid_amount');
-  String get invoicesCompanyEmpty => _('invoices_company_empty');
   String get invoicesCreated => _('invoices_created');
   String get invoicesSaved => _('invoices_saved');
   String get invoicesSaveFailed => _('invoices_save_failed');
@@ -248,9 +245,6 @@ class LocalizationDefinition {
       'invoices_section_client': 'Client',
       'invoices_section_client_body':
           'Select a client. Past invoices keep the client details from when they were issued; you can switch to current data when regenerating.',
-      'invoices_section_company': 'Company',
-      'invoices_section_company_body':
-          'Your company details are pulled from the Company section and snapshotted onto this invoice.',
       'invoices_section_jobs': 'Jobs',
       'invoices_section_jobs_body':
           'Add line items with description, quantity, and price.',
@@ -281,7 +275,6 @@ class LocalizationDefinition {
       'invoices_client_required': 'Select a client before you save.',
       'invoices_invalid_amount':
           'Enter valid numbers for quantity and unit price.',
-      'invoices_company_empty': 'No company details yet. Set them in Company.',
       'invoices_created': 'Invoice created',
       'invoices_saved': 'Invoice saved',
       'invoices_save_failed': 'Could not save invoice',
