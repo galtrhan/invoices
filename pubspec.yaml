@@ -44,6 +44,7 @@ dependencies:
   printing: ^5.14.3
   intl: ^0.20.3
   num2text: ^0.0.4
+  msix: ^3.16.4
 
 dev_dependencies:
   flutter_test:
@@ -57,6 +58,15 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   drift_dev: ^2.28.2
   build_runner: ^2.5.4
+
+msix_config:
+  display_name: Invoices
+  publisher_display_name: YourName
+  identity_name: YourCompany.Invoices
+  publisher: CN=YourCompany
+  msix_version: 1.0.0.0
+  logo_path: windows\runner\resources\app_icon.ico
+  capabilities: internetClient
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
